@@ -1,0 +1,166 @@
+"use client";
+
+import { useState } from "react";
+import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
+import { useProducts, useDebtorNames, useInvalidatePosData } from "@/lib/hooks/use-pos-data";
+import { useProfile } from "@/lib/hooks/use-profile";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { BalanceHeader } from "@/components/pos/balance-header";
+import { ModeSwitch } from "@/components/pos/mode-switch";
+import { SellForm } from "@/components/pos/sell-form";
+import { CartList } from "@/components/pos/cart-list";
+import { PaymentSection, type PayType } from "@/components/pos/payment-section";
+import { DebtorsDialog } from "@/components/modals/debtors-dialog";
+import { TransferDialog } from "@/components/modals/transfer-dialog";
+import { VoidDialog } from "@/components/modals/void-dialog";
+import { ReportDialog } from "@/components/modals/report-dialog";
+import { ArchiveDialog } from "@/components/modals/archive-dialog";
+import type { CartLine, TransactionMode } from "@/lib/types/database";
+
+const PAY_TYPE_TO_DB: Record<PayType, string> = {
+  cash: "เงินสด",
+  transfer: "โอน",
+  credit: "เซ็น",
+};
+
+export default function PosPage() {
+  const [mode, setMode] = useState<TransactionMode>("income");
+  const [cart, setCart] = useState<CartLine[]>([]);
+  const [payType, setPayType] = useState<PayType>("cash");
+  const [customerName, setCustomerName] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const [dialog, setDialog] = useState<
+    null | "debtors" | "transfer" | "void" | "report-view" | "report-close" | "archive"
+  >(null);
+
+  const { isAdmin } = useProfile();
+  const { data: products = [] } = useProducts();
+  const { data: debtorNames = [] } = useDebtorNames();
+  const invalidate = useInvalidatePosData();
+
+  const total = cart.reduce((s, i) => s + i.total, 0);
+
+  function handleModeChange(next: "income" | "expense" | "stock_in") {
+    setMode(next);
+    setCart([]);
+    if (next !== "income" && payType === "credit") setPayType("cash");
+  }
+
+  async function handleSubmit() {
+    if (!cart.length) {
+      toast.error("เพิ่มรายการก่อน!");
+      return;
+    }
+    if (payType === "credit" && !customerName.trim()) {
+      toast.error("ใส่ชื่อคนเซ็นด้วย!");
+      return;
+    }
+
+    setSaving(true);
+    const supabase = createClient();
+    const { data, error } = await supabase.rpc("save_transaction", {
+      p_cart: cart,
+      p_payment_type: PAY_TYPE_TO_DB[payType],
+      p_customer_name: payType === "credit" ? customerName.trim() : null,
+      p_mode: mode,
+    });
+    setSaving(false);
+
+    if (error) {
+      toast.error("บันทึกไม่สำเร็จ: " + error.message);
+      return;
+    }
+    if (!data?.ok) {
+      toast.error(data?.message ?? "บันทึกไม่สำเร็จ");
+      return;
+    }
+
+    toast.success(data.message ?? "บันทึกข้อมูลสำเร็จ!");
+    setCart([]);
+    setCustomerName("");
+    invalidate();
+  }
+
+  return (
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-3 p-3 pb-8">
+      <BalanceHeader />
+
+      <Card>
+        <ModeSwitch mode={mode} onChange={handleModeChange} />
+        <SellForm mode={mode} products={products} onAdd={(line) => setCart((c) => [...c, line])} />
+        <CartList cart={cart} onRemove={(i) => setCart((c) => c.filter((_, idx) => idx !== i))} />
+
+        <PaymentSection
+          total={total}
+          allowCredit={mode === "income"}
+          payType={payType}
+          onPayTypeChange={setPayType}
+          customerName={customerName}
+          onCustomerNameChange={setCustomerName}
+          debtorNames={debtorNames}
+        />
+
+        <Button onClick={handleSubmit} disabled={saving} size="lg" className="mt-3 w-full">
+          {saving ? "กำลังบันทึก..." : "💾 บันทึกข้อมูล"}
+        </Button>
+
+        <div className="mt-2 grid grid-cols-1 gap-2">
+          <Button variant="outline" size="sm" onClick={() => setDialog("transfer")}>
+            🔄 โยกเงิน (เงินสด ↔ เงินโอน)
+          </Button>
+          <Button variant="outlineDanger" size="sm" onClick={() => setDialog("void")}>
+            🔍 ค้นหาและยกเลิกรายการ (Void)
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setDialog("debtors")}>
+            👥 ดูยอดหนี้ค้างชำระ
+          </Button>
+        </div>
+      </Card>
+
+      <Card>
+        <p className="mb-2 text-[0.65rem] font-semibold uppercase tracking-wide text-slate-400">
+          รายงานประจำเดือน (26-25)
+        </p>
+        <div className="grid grid-cols-1 gap-2">
+          <Button
+            variant="ghost"
+            className="border border-slate-800 bg-slate-900 text-white hover:bg-slate-800"
+            onClick={() => setDialog("report-view")}
+          >
+            📄 ดูรายงาน / ดาวน์โหลด PDF
+          </Button>
+          <Button variant="outline" onClick={() => setDialog("archive")}>
+            🗂️ รายงานย้อนหลัง (ทั้งปี)
+          </Button>
+
+          {isAdmin && (
+            <>
+              <p className="mt-2 text-[0.65rem] font-semibold text-rose-500">โซนปิดงวด — ทำครั้งเดียวต่อเดือน</p>
+              <Button variant="danger" onClick={() => setDialog("report-close")}>
+                🔒 ปิดงวด + จัดสรรกำไร
+              </Button>
+            </>
+          )}
+        </div>
+      </Card>
+
+      <DebtorsDialog open={dialog === "debtors"} onOpenChange={(o) => setDialog(o ? "debtors" : null)} />
+      <TransferDialog open={dialog === "transfer"} onOpenChange={(o) => setDialog(o ? "transfer" : null)} />
+      <VoidDialog open={dialog === "void"} onOpenChange={(o) => setDialog(o ? "void" : null)} />
+      <ReportDialog
+        mode="view"
+        open={dialog === "report-view"}
+        onOpenChange={(o) => setDialog(o ? "report-view" : null)}
+      />
+      <ReportDialog
+        mode="close"
+        open={dialog === "report-close"}
+        onOpenChange={(o) => setDialog(o ? "report-close" : null)}
+      />
+      <ArchiveDialog open={dialog === "archive"} onOpenChange={(o) => setDialog(o ? "archive" : null)} />
+    </main>
+  );
+}
