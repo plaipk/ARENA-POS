@@ -5,7 +5,7 @@ export function Label({ className, ...props }: React.LabelHTMLAttributes<HTMLLab
   return (
     <label
       className={cn(
-        "mb-1 block text-[0.65rem] font-semibold uppercase tracking-wide text-[var(--ink-soft)]",
+        "mb-1 block text-[0.65rem] font-semibold uppercase tracking-wide text-slate-400",
         className,
       )}
       {...props}

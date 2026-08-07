@@ -1,44 +1,8 @@
 @import "tailwindcss";
 
-/*
- * Skeuomorphic design tokens — everything reads as a physical object sitting
- * on a counter: paper/leather surfaces, carved-in inputs, pressable buttons.
- * Two ingredients used everywhere:
- *   1. A top highlight + bottom shadow to fake a light source from above.
- *   2. Gradients instead of flat fills, so surfaces catch light unevenly.
- */
 :root {
-  --background: #e9e2d0;
-  --foreground: #241f14;
-
-  --surface: #fbf7ee;
-  --surface-2: #f1ead9;
-  --ink: #241f14;
-  --ink-soft: #6b6152;
-  --line: #d8cba9;
-
-  --navy-1: #23273f;
-  --navy-2: #4a4e69;
-
-  --shadow-raised:
-    0 1px 0 rgba(255, 255, 255, 0.7) inset,
-    0 -2px 3px rgba(60, 45, 10, 0.12) inset,
-    0 1px 2px rgba(60, 45, 10, 0.12),
-    0 6px 14px -4px rgba(60, 45, 10, 0.28);
-  --shadow-raised-sm:
-    0 1px 0 rgba(255, 255, 255, 0.7) inset,
-    0 -1px 2px rgba(60, 45, 10, 0.1) inset,
-    0 2px 5px -1px rgba(60, 45, 10, 0.22);
-  --shadow-pressed:
-    inset 0 2px 5px rgba(35, 25, 5, 0.35),
-    inset 0 1px 1px rgba(35, 25, 5, 0.2);
-  --shadow-card:
-    0 1px 0 rgba(255, 255, 255, 0.8) inset,
-    0 1px 2px rgba(60, 45, 10, 0.08),
-    0 14px 30px -12px rgba(60, 45, 10, 0.35);
-  --shadow-well:
-    inset 0 2px 4px rgba(35, 25, 5, 0.28),
-    inset 0 1px 2px rgba(35, 25, 5, 0.18);
+  --background: #f4f6f9;
+  --foreground: #1a1c2c;
 }
 
 @theme inline {
@@ -48,41 +12,6 @@
 }
 
 body {
+  background: var(--background);
   color: var(--foreground);
-  background-color: var(--background);
-  background-image:
-    radial-gradient(ellipse 120% 60% at 50% -10%, rgba(255, 255, 255, 0.5), transparent 60%),
-    repeating-linear-gradient(
-      45deg,
-      rgba(60, 45, 10, 0.02) 0px,
-      rgba(60, 45, 10, 0.02) 1px,
-      transparent 1px,
-      transparent 10px
-    );
-  background-attachment: fixed;
-}
-
-/* Reusable skeuomorphic surface classes — layered on top of Tailwind utilities. */
-.sk-card {
-  background: linear-gradient(180deg, var(--surface), var(--surface-2));
-  box-shadow: var(--shadow-card);
-  border: 1px solid var(--line);
-}
-
-.sk-well {
-  background: linear-gradient(180deg, #ede4cd, #f4eeda);
-  box-shadow: var(--shadow-well);
-  border: 1px solid var(--line);
-}
-
-.sk-raised {
-  box-shadow: var(--shadow-raised);
-}
-
-.sk-raised-sm {
-  box-shadow: var(--shadow-raised-sm);
-}
-
-.sk-pressed {
-  box-shadow: var(--shadow-pressed);
 }

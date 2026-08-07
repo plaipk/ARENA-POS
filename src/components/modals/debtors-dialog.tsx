@@ -65,20 +65,20 @@ export function DebtorsDialog({ open, onOpenChange }: { open: boolean; onOpenCha
           <DialogTitle>สรุปยอดลูกหนี้</DialogTitle>
         </DialogHeader>
 
-        {isLoading && <p className="py-6 text-center text-sm text-[var(--ink-soft)]">กำลังโหลด...</p>}
+        {isLoading && <p className="py-6 text-center text-sm text-slate-400">กำลังโหลด...</p>}
         {!isLoading && !data?.length && (
-          <p className="py-6 text-center text-sm text-[var(--ink-soft)]">ไม่มีหนี้ค้าง</p>
+          <p className="py-6 text-center text-sm text-slate-400">ไม่มีหนี้ค้าง</p>
         )}
 
         <div className="space-y-2">
           {data?.map((d) => (
-            <div key={d.name} className="sk-well rounded-2xl p-3">
+            <div key={d.name} className="rounded-2xl bg-slate-50 p-3">
               <div className="flex justify-between">
                 <b className="text-sm">{d.name}</b>
                 <span className="text-sm font-bold text-rose-600">ยอดค้าง: {formatMoney(d.total)}</span>
               </div>
               <div className="mt-2 flex gap-1">
-                <span className="sk-well flex h-8 items-center rounded-l-lg border-r-0 px-2 text-xs text-[var(--ink-soft)]">
+                <span className="flex h-8 items-center rounded-l-lg border border-r-0 border-slate-300 bg-slate-100 px-2 text-xs text-slate-500">
                   ฿
                 </span>
                 <Input
@@ -98,7 +98,7 @@ export function DebtorsDialog({ open, onOpenChange }: { open: boolean; onOpenCha
                 </Button>
                 <Button
                   size="sm"
-                  className="border-sky-700/40 from-sky-400 to-sky-600 shadow-[0_1px_0_rgba(255,255,255,0.4)_inset,0_-2px_4px_rgba(0,0,0,0.15)_inset,0_3px_6px_-1px_rgba(3,105,161,0.5)]"
+                  className="bg-sky-500 hover:bg-sky-600"
                   disabled={settling === d.name}
                   onClick={() => settle(d.name, d.total, "transfer")}
                 >

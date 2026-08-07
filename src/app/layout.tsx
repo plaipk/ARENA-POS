@@ -23,7 +23,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="th" className={`${prompt.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col font-sans">
+      <body className="flex min-h-full flex-col bg-slate-100 font-sans">
         <QueryProvider>{children}</QueryProvider>
         <Toaster richColors position="top-center" />
       </body>
