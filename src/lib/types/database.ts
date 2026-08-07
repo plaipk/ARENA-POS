@@ -480,6 +480,33 @@ export interface Database {
         Args: { p_month: number; p_year: number };
         Returns: SaveTransactionResult & { alloc?: AllocationBreakdown; period?: string };
       };
+      upsert_product: {
+        Args: {
+          p_id: string | null;
+          p_name: string;
+          p_category: ProductCategory;
+          p_cost: number;
+          p_price: number;
+          p_stock: number;
+        };
+        Returns: SaveTransactionResult & { id?: string };
+      };
+      delete_product: {
+        Args: { p_id: string };
+        Returns: SaveTransactionResult;
+      };
+      update_transaction: {
+        Args: {
+          p_id: string;
+          p_occurred_at: string;
+          p_detail: string;
+          p_income: number;
+          p_expense: number;
+          p_payment_method: PaymentMethod;
+          p_category: TransactionCategory;
+        };
+        Returns: SaveTransactionResult;
+      };
     };
   };
 }

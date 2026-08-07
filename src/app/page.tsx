@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { useProducts, useDebtorNames, useInvalidatePosData } from "@/lib/hooks/use-pos-data";
@@ -85,6 +86,19 @@ export default function PosPage() {
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-3 p-3 pb-8">
       <BalanceHeader />
+
+      <div className="flex gap-2">
+        <Link href="/statement" className="flex-1">
+          <Button variant="outline" size="sm" className="w-full">
+            📑 สเตทเมนต์
+          </Button>
+        </Link>
+        <Link href="/products" className="flex-1">
+          <Button variant="outline" size="sm" className="w-full">
+            📦 จัดการสินค้า
+          </Button>
+        </Link>
+      </div>
 
       <Card>
         <ModeSwitch mode={mode} onChange={handleModeChange} />
