@@ -27,10 +27,10 @@ export function PaymentSection({
 }) {
   return (
     <div>
-      <div className="flex items-center justify-between border-t border-slate-100 pt-2">
+      <div className="flex items-center justify-between border-t border-[var(--line)] pt-2">
         <div>
           <Label className="mb-0">รวมทั้งบิล</Label>
-          <div className="text-2xl font-bold text-indigo-600">{formatMoney(total)}</div>
+          <div className="font-mono text-2xl font-bold text-indigo-700">{formatMoney(total)}</div>
         </div>
         <div className="w-[40%]">
           <Label>ชำระ</Label>

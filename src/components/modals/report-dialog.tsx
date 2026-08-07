@@ -115,18 +115,18 @@ export function ReportDialog({
           </Select>
         </div>
 
-        {isLoading && <p className="py-6 text-center text-sm text-slate-400">กำลังประมวลผล...</p>}
+        {isLoading && <p className="py-6 text-center text-sm text-[var(--ink-soft)]">กำลังประมวลผล...</p>}
 
         {report && (
           <div className="text-center text-sm">
-            <h4 className="text-slate-400">รอบวันที่: {report.period}</h4>
+            <h4 className="text-[var(--ink-soft)]">รอบวันที่: {report.period}</h4>
             <div className="my-3 grid grid-cols-2 gap-2">
-              <div className="rounded-lg border p-2">
+              <div className="sk-well rounded-lg p-2">
                 รายได้รวม
                 <br />
                 <b>฿{formatMoney(report.total_income)}</b>
               </div>
-              <div className="rounded-lg border p-2">
+              <div className="sk-well rounded-lg p-2">
                 รายจ่ายรวม
                 <br />
                 <b>฿{formatMoney(report.total_expense)}</b>
@@ -138,7 +138,7 @@ export function ReportDialog({
               <h3 className="m-0 text-2xl font-bold">฿{formatMoney(report.alloc.net_profit)}</h3>
             </div>
 
-            <div className="mb-2 rounded-2xl border bg-slate-50 p-3 text-left">
+            <div className="sk-well mb-2 rounded-2xl p-3 text-left">
               <small className="mb-1 block font-bold text-indigo-600">การจัดสรรกำไร:</small>
               <Row label="1. ทุนการศึกษา (30%)" value={report.alloc.scholarship} />
               <Row label="2. สำรองฉุกเฉิน (30%)" value={report.alloc.emergency} />
@@ -158,7 +158,7 @@ export function ReportDialog({
               </div>
             )}
             {!isClose && (
-              <div className="rounded-lg bg-slate-100 p-2 text-[0.7rem] text-slate-500">
+              <div className="sk-well rounded-lg p-2 text-[0.7rem] text-[var(--ink-soft)]">
                 โหมดดูอย่างเดียว — ตัวเลขจัดสรรด้านบนเป็นการคำนวณให้ดูเฉย ๆ ยังไม่ถูกบันทึกลงบัญชี
               </div>
             )}

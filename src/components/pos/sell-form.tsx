@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Button, type ButtonProps } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import type { Product, CartLine, TransactionMode } from "@/lib/types/database";
 
@@ -13,10 +13,10 @@ const MODE_PRICE_LABEL: Record<string, string> = {
   stock_in: "ทุนรวม/หน่วย",
 };
 
-const MODE_BUTTON_COLOR: Record<string, string> = {
-  income: "#06d6a0",
-  expense: "#ef476f",
-  stock_in: "#ffd166",
+const MODE_BUTTON_VARIANT: Record<string, ButtonProps["variant"]> = {
+  income: "success",
+  expense: "danger",
+  stock_in: "warning",
 };
 
 export function SellForm({
@@ -98,12 +98,7 @@ export function SellForm({
           <Input type="number" inputMode="numeric" value={qty} onChange={(e) => setQty(e.target.value)} />
         </div>
       </div>
-      <Button
-        type="button"
-        onClick={handleAdd}
-        className="mt-2 w-full text-white"
-        style={{ background: MODE_BUTTON_COLOR[mode] }}
-      >
+      <Button type="button" onClick={handleAdd} variant={MODE_BUTTON_VARIANT[mode]} className="mt-2 w-full">
         + เพิ่มรายการ
       </Button>
     </div>

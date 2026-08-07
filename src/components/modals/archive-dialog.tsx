@@ -64,7 +64,7 @@ export function ArchiveDialog({ open, onOpenChange }: { open: boolean; onOpenCha
             <DialogTitle>🗂️ รายงานย้อนหลัง</DialogTitle>
           </div>
           <div className="mt-2 flex items-center gap-2">
-            <span className="text-xs text-slate-400">ปี</span>
+            <span className="text-xs text-[var(--ink-soft)]">ปี</span>
             <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
               <SelectTrigger className="w-24">
                 <SelectValue />
@@ -81,20 +81,20 @@ export function ArchiveDialog({ open, onOpenChange }: { open: boolean; onOpenCha
           </div>
         </DialogHeader>
 
-        {isLoading && <p className="py-6 text-center text-sm text-slate-400">กำลังโหลด...</p>}
+        {isLoading && <p className="py-6 text-center text-sm text-[var(--ink-soft)]">กำลังโหลด...</p>}
         {!isLoading && !months?.length && (
-          <p className="py-6 text-center text-sm text-slate-400">ยังไม่มีข้อมูลของปี {year}</p>
+          <p className="py-6 text-center text-sm text-[var(--ink-soft)]">ยังไม่มีข้อมูลของปี {year}</p>
         )}
 
         <div className="space-y-2">
           {months?.map((m) => (
-            <div key={m.month} className="rounded-2xl bg-slate-50 p-3">
+            <div key={m.month} className="sk-well rounded-2xl p-3">
               <div className="flex items-start justify-between">
                 <div>
                   <b className="text-sm">
                     {m.month_name} {year}
                   </b>
-                  <div className="text-[0.62rem] text-slate-400">รอบ {m.period}</div>
+                  <div className="text-[0.62rem] text-[var(--ink-soft)]">รอบ {m.period}</div>
                 </div>
                 <Badge variant={m.allocated ? "success" : "default"}>
                   {m.allocated ? "จัดสรรแล้ว" : "ยังไม่จัดสรร"}
@@ -102,24 +102,24 @@ export function ArchiveDialog({ open, onOpenChange }: { open: boolean; onOpenCha
               </div>
 
               <div className="mt-2 grid grid-cols-3 gap-1 text-center text-[0.62rem]">
-                <div className="rounded-lg border bg-white py-1">
+                <div className="sk-raised-sm rounded-lg bg-[var(--surface)] py-1">
                   รายรับ
                   <br />
                   <b className="text-sm text-emerald-600">{formatMoney(m.total_income)}</b>
                 </div>
-                <div className="rounded-lg border bg-white py-1">
+                <div className="sk-raised-sm rounded-lg bg-[var(--surface)] py-1">
                   รายจ่าย
                   <br />
                   <b className="text-sm text-rose-600">{formatMoney(m.total_expense)}</b>
                 </div>
-                <div className="rounded-lg border bg-white py-1">
+                <div className="sk-raised-sm rounded-lg bg-[var(--surface)] py-1">
                   กำไรสุทธิ
                   <br />
                   <b className="text-sm text-indigo-600">{formatMoney(m.alloc.net_profit)}</b>
                 </div>
               </div>
 
-              <div className="mt-2 text-[0.6rem] text-slate-400">
+              <div className="mt-2 text-[0.6rem] text-[var(--ink-soft)]">
                 {m.has_pdf ? `📄 ไฟล์ล่าสุด ${m.pdf_created_at ?? ""}` : "📄 ยังไม่เคยพิมพ์ PDF"}
                 {m.allocated && ` • 🔒 จัดสรรเมื่อ ${m.alloc_date} (${formatMoney(m.alloc.total_out)} บาท)`}
               </div>

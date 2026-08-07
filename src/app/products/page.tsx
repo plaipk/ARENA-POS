@@ -34,29 +34,29 @@ export default function ProductsPage() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-3 p-3 pb-8">
+    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-3 p-3 pb-8 lg:max-w-4xl">
       <div className="flex items-center gap-2">
         <Link href="/">
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
-        <h1 className="text-lg font-bold text-slate-800">📦 จัดการสินค้า</h1>
+        <h1 className="text-lg font-bold text-[var(--ink)]">📦 จัดการสินค้า</h1>
         <Button className="ml-auto" onClick={() => setEditing(null)}>
           + เพิ่มสินค้า
         </Button>
       </div>
 
       <Card>
-        {isLoading && <p className="py-6 text-center text-sm text-slate-400">กำลังโหลด...</p>}
+        {isLoading && <p className="py-6 text-center text-sm text-[var(--ink-soft)]">กำลังโหลด...</p>}
         {!isLoading && !products.length && (
-          <p className="py-6 text-center text-sm text-slate-400">ยังไม่มีสินค้า กด &quot;+ เพิ่มสินค้า&quot; เพื่อเริ่ม</p>
+          <p className="py-6 text-center text-sm text-[var(--ink-soft)]">ยังไม่มีสินค้า กด &quot;+ เพิ่มสินค้า&quot; เพื่อเริ่ม</p>
         )}
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b text-left text-xs text-slate-400">
+              <tr className="border-b border-[var(--line)] text-left text-xs text-[var(--ink-soft)]">
                 <th className="py-2 pr-2">ชื่อ</th>
                 <th className="px-2 py-2">ประเภท</th>
                 <th className="px-2 py-2 text-right">ต้นทุน</th>
@@ -67,8 +67,8 @@ export default function ProductsPage() {
             </thead>
             <tbody>
               {products.map((p) => (
-                <tr key={p.id} className="border-b border-slate-50 last:border-0">
-                  <td className="py-2 pr-2 font-medium text-slate-800">{p.name}</td>
+                <tr key={p.id} className="border-b border-[var(--line)]/60 last:border-0">
+                  <td className="py-2 pr-2 font-medium text-[var(--ink)]">{p.name}</td>
                   <td className="px-2 py-2">
                     <Badge variant={p.category === "field_rental" ? "info" : "default"}>
                       {p.category === "field_rental" ? "ค่าเช่าสนาม" : "สินค้าทั่วไป"}

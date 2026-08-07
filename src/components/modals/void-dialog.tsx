@@ -83,18 +83,18 @@ export function VoidDialog({ open, onOpenChange }: { open: boolean; onOpenChange
 
         <div className="max-h-80 space-y-2 overflow-y-auto">
           {results === null && (
-            <p className="py-6 text-center text-sm text-slate-400">ระบุวันที่แล้วกดค้นหา เพื่อเลือกรายการที่จะลบ</p>
+            <p className="py-6 text-center text-sm text-[var(--ink-soft)]">ระบุวันที่แล้วกดค้นหา เพื่อเลือกรายการที่จะลบ</p>
           )}
           {results?.length === 0 && (
-            <p className="py-6 text-center text-sm text-slate-400">ไม่พบรายการในวันที่เลือก</p>
+            <p className="py-6 text-center text-sm text-[var(--ink-soft)]">ไม่พบรายการในวันที่เลือก</p>
           )}
           {results?.map((r) => (
             <div
               key={r.id}
-              className={`flex items-center justify-between rounded-xl p-2 ${r.source === "debt" ? "bg-amber-50" : "bg-slate-50"}`}
+              className={`sk-well flex items-center justify-between rounded-xl p-2 ${r.source === "debt" ? "!bg-gradient-to-b !from-amber-100 !to-amber-200" : ""}`}
             >
               <div className="text-xs leading-tight">
-                <b className="text-slate-800">{r.detail}</b>
+                <b className="text-[var(--ink)]">{r.detail}</b>
                 <br />
                 <span className="font-bold text-indigo-600">฿{formatMoney(r.amount)}</span>{" "}
                 <Badge variant={r.source === "debt" ? "danger" : "default"}>{r.type}</Badge>{" "}
