@@ -1,3 +1,231 @@
+-- Run this ONCE to wipe the previous (auth-based) schema attempt and replace
+-- it with the no-login version. Safe to run even if nothing exists yet.
+
+drop trigger if exists on_auth_user_created on auth.users;
+drop function if exists public.handle_new_user();
+
+drop table if exists public.audit_log cascade;
+drop table if exists public.reports cascade;
+drop table if exists public.reserve_fund_entries cascade;
+drop table if exists public.profit_allocations cascade;
+drop table if exists public.debt_payment_allocations cascade;
+drop table if exists public.debt_payments cascade;
+drop table if exists public.debts cascade;
+drop table if exists public.transactions cascade;
+drop table if exists public.products cascade;
+drop table if exists public.profiles cascade;
+
+drop view if exists public.v_balance_summary;
+drop view if exists public.v_debtor_summary;
+
+drop function if exists public.is_admin();
+drop function if exists public.save_transaction(jsonb, text, text, text);
+drop function if exists public.settle_debt(text, numeric, text);
+drop function if exists public.void_transaction(uuid, text);
+drop function if exists public.void_debt(uuid, text);
+drop function if exists public.transfer_funds(text, numeric);
+drop function if exists public.search_transactions_by_date(date);
+drop function if exists public.get_report_by_month(int, int);
+drop function if exists public.get_report_archive(int);
+drop function if exists public.save_allocation_entry(int, int);
+
+-- (the storage bucket itself is left alone — Supabase blocks direct DELETEs
+-- on storage tables; 0005_storage.sql re-inserts it with ON CONFLICT DO
+-- NOTHING, which is a no-op if it's already there)
+drop policy if exists "reports_bucket_read" on storage.objects;
+-- ARENA POS Pro — core schema
+-- Replaces the 5 Google Sheets (รายรับรายจ่าย, สินค้า, ค้างรับ, เงินสำรองสนาม, Log).
+--
+-- No login/accounts: anyone who opens the app has full access, same as the
+-- original (which only gated destructive actions behind a shared "1234"
+-- prompt). There is no `profiles`/roles table and no `created_by` tracking.
+
+create extension if not exists pgcrypto;
+
+-- ============================================================
+-- products — replaces "สินค้า". `category` replaces the old
+-- detail.includes("สนาม") text-sniffing: a product is tagged once as
+-- field_rental and every sale of it reports correctly forever.
+-- ============================================================
+create table public.products (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique,
+  category text not null default 'merchandise' check (category in ('merchandise', 'field_rental')),
+  cost numeric not null default 0 check (cost >= 0),
+  price numeric not null default 0 check (price >= 0),
+  stock numeric not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- ============================================================
+-- transactions — flat ledger, one row per line (same granularity as the
+-- original sheet rows). Current balance is a plain aggregate query
+-- (sum(income-expense) where payment_method=... and not is_void) — no
+-- per-row running-balance formula to rewrite when a row is voided.
+-- ============================================================
+create table public.transactions (
+  id uuid primary key default gen_random_uuid(),
+  occurred_at timestamptz not null default now(),
+  product_id uuid references public.products (id),
+  product_name text,
+  qty numeric,
+  unit_price numeric,
+  detail text not null,
+  income numeric not null default 0 check (income >= 0),
+  expense numeric not null default 0 check (expense >= 0),
+  cost_total numeric not null default 0,
+  profit_total numeric not null default 0,
+  payment_method text not null check (payment_method in ('cash', 'transfer')),
+  category text not null check (
+    category in (
+      'product_sale', 'field_rental', 'general_expense', 'stock_purchase',
+      'debt_settlement', 'transfer', 'profit_allocation'
+    )
+  ),
+  mode text not null check (mode in ('income', 'expense', 'stock_in', 'settlement', 'transfer', 'allocation')),
+  is_void boolean not null default false,
+  void_reason text,
+  voided_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create index transactions_occurred_at_idx on public.transactions (occurred_at);
+create index transactions_active_idx on public.transactions (payment_method, category) where not is_void;
+create index transactions_product_idx on public.transactions (product_id);
+
+-- ============================================================
+-- debts — credit sales ("เซ็น"), replaces "ค้างรับ".
+-- ============================================================
+create table public.debts (
+  id uuid primary key default gen_random_uuid(),
+  occurred_at timestamptz not null default now(),
+  customer_name text not null,
+  product_id uuid references public.products (id),
+  product_name text,
+  qty numeric,
+  detail text not null,
+  amount numeric not null check (amount > 0),
+  cost_total numeric not null default 0,
+  profit_total numeric not null default 0,
+  remaining_amount numeric not null check (remaining_amount >= 0),
+  remaining_cost numeric not null default 0,
+  remaining_profit numeric not null default 0,
+  status text not null default 'outstanding' check (status in ('outstanding', 'partial', 'paid', 'void')),
+  created_at timestamptz not null default now()
+);
+
+create index debts_customer_idx on public.debts (customer_name);
+create index debts_status_idx on public.debts (status);
+
+-- ============================================================
+-- debt_payments / debt_payment_allocations — settlement records. The
+-- original had no way to see how a payment split across debt rows; this
+-- adds one and makes a settlement reversible.
+-- ============================================================
+create table public.debt_payments (
+  id uuid primary key default gen_random_uuid(),
+  customer_name text not null,
+  amount numeric not null check (amount > 0),
+  payment_method text not null check (payment_method in ('cash', 'transfer')),
+  cost_total numeric not null default 0,
+  profit_total numeric not null default 0,
+  transaction_id uuid references public.transactions (id),
+  created_at timestamptz not null default now()
+);
+
+create table public.debt_payment_allocations (
+  id uuid primary key default gen_random_uuid(),
+  debt_payment_id uuid not null references public.debt_payments (id) on delete cascade,
+  debt_id uuid not null references public.debts (id),
+  amount numeric not null check (amount > 0),
+  cost_part numeric not null default 0,
+  profit_part numeric not null default 0,
+  created_at timestamptz not null default now()
+);
+
+-- ============================================================
+-- profit_allocations — replaces the "จัดสรรกำไรส่วนกลาง" tag-scan. The
+-- UNIQUE constraint on `period` is what prevents double-allocation, instead
+-- of scanning every ledger row for a matching tag string on every attempt.
+-- ============================================================
+create table public.profit_allocations (
+  id uuid primary key default gen_random_uuid(),
+  month int not null check (month between 1 and 12),
+  year int not null check (year between 2000 and 2100),
+  period text not null unique,
+  net_profit numeric not null,
+  scholarship numeric not null,
+  emergency numeric not null,
+  rotate numeric not null,
+  staff numeric not null,
+  total_out numeric not null,
+  transaction_id uuid references public.transactions (id),
+  created_at timestamptz not null default now()
+);
+
+-- ============================================================
+-- reserve_fund_entries — replaces "เงินสำรองสนาม".
+-- ============================================================
+create table public.reserve_fund_entries (
+  id uuid primary key default gen_random_uuid(),
+  period text not null,
+  amount numeric not null,
+  allocation_id uuid references public.profit_allocations (id),
+  created_at timestamptz not null default now()
+);
+
+-- ============================================================
+-- reports — replaces the Drive-folder file listing. Multiple rows per
+-- month are kept on purpose: regenerating a report keeps history instead of
+-- silently overwriting the previous file like the original Drive folder did.
+-- ============================================================
+create table public.reports (
+  id uuid primary key default gen_random_uuid(),
+  month int not null check (month between 1 and 12),
+  year int not null check (year between 2000 and 2100),
+  period text not null,
+  file_name text not null,
+  storage_path text not null,
+  created_at timestamptz not null default now()
+);
+
+create index reports_month_year_idx on public.reports (year, month, created_at desc);
+
+-- ============================================================
+-- audit_log — replaces the "Log" sheet. No user identity to attach (no
+-- accounts), so this is just a what/when trail, not a who trail.
+-- ============================================================
+create table public.audit_log (
+  id uuid primary key default gen_random_uuid(),
+  action text not null,
+  detail text,
+  amount numeric,
+  mode text,
+  created_at timestamptz not null default now()
+);
+
+create index audit_log_created_at_idx on public.audit_log (created_at desc);
+-- Read-only views backing the POS header balance and the debtors dialog.
+-- security_invoker so RLS on the underlying tables still applies per-caller
+-- (without it, a view runs with its owner's rights and would bypass RLS).
+
+create view public.v_balance_summary
+with (security_invoker = true) as
+select
+  coalesce(sum(income - expense) filter (where payment_method = 'cash'), 0) as cash,
+  coalesce(sum(income - expense) filter (where payment_method = 'transfer'), 0) as transfer
+from public.transactions
+where not is_void;
+
+create view public.v_debtor_summary
+with (security_invoker = true) as
+select customer_name as name, sum(remaining_amount) as total
+from public.debts
+where status in ('outstanding', 'partial')
+group by customer_name
+having sum(remaining_amount) > 0
+order by customer_name;
 -- RPC functions — mirror the original Code.gs functions 1:1. Every mutation
 -- the app performs goes through one of these (RLS denies direct table
 -- writes; see 20250101000004_rls.sql), which is what replaces
@@ -690,3 +918,78 @@ exception when others then
   return jsonb_build_object('ok', false, 'message', '❌ Error: ' || sqlerrm);
 end;
 $$;
+-- No accounts, so there's no "authenticated" role to gate on — the app talks
+-- to Supabase using only the public anon key. RLS here still does one useful
+-- job: everyone can SELECT, but nobody (not even anon) has an INSERT/UPDATE/
+-- DELETE policy on any table, so raw table writes are impossible from the
+-- client. The only way to mutate anything is through the SECURITY DEFINER
+-- functions in 20250101000003_functions.sql, which run as their owner and
+-- therefore bypass RLS for their own internal writes.
+
+alter table public.products enable row level security;
+alter table public.transactions enable row level security;
+alter table public.debts enable row level security;
+alter table public.debt_payments enable row level security;
+alter table public.debt_payment_allocations enable row level security;
+alter table public.reserve_fund_entries enable row level security;
+alter table public.profit_allocations enable row level security;
+alter table public.reports enable row level security;
+alter table public.audit_log enable row level security;
+
+create policy "products_select" on public.products
+  for select to anon, authenticated using (true);
+
+create policy "transactions_select" on public.transactions
+  for select to anon, authenticated using (true);
+
+create policy "debts_select" on public.debts
+  for select to anon, authenticated using (true);
+
+create policy "debt_payments_select" on public.debt_payments
+  for select to anon, authenticated using (true);
+
+create policy "reserve_fund_entries_select" on public.reserve_fund_entries
+  for select to anon, authenticated using (true);
+
+create policy "profit_allocations_select" on public.profit_allocations
+  for select to anon, authenticated using (true);
+
+create policy "reports_select" on public.reports
+  for select to anon, authenticated using (true);
+
+create policy "audit_log_select" on public.audit_log
+  for select to anon, authenticated using (true);
+
+-- Table grants: PostgREST still checks these before RLS even runs, so `anon`
+-- needs SELECT on every table/view it's allowed to read, and EXECUTE on
+-- every RPC function above.
+grant usage on schema public to anon, authenticated;
+grant select on
+  public.products, public.transactions, public.debts,
+  public.debt_payments, public.reserve_fund_entries, public.profit_allocations,
+  public.reports, public.audit_log, public.v_balance_summary, public.v_debtor_summary
+to anon, authenticated;
+
+grant execute on function
+  public.save_transaction(jsonb, text, text, text),
+  public.settle_debt(text, numeric, text),
+  public.void_transaction(uuid, text),
+  public.void_debt(uuid, text),
+  public.transfer_funds(text, numeric),
+  public.search_transactions_by_date(date),
+  public.get_report_by_month(int, int),
+  public.get_report_archive(int),
+  public.save_allocation_entry(int, int)
+to anon, authenticated;
+-- Storage bucket for generated monthly PDFs (replaces the "ARENA_Reports"
+-- Google Drive folder). Private bucket: uploads only ever happen from the
+-- /api/reports/generate route using the service-role key (bypasses RLS);
+-- everyone else gets short-lived signed URLs to view/download.
+
+insert into storage.buckets (id, name, public)
+values ('reports', 'reports', false)
+on conflict (id) do nothing;
+
+create policy "reports_bucket_read" on storage.objects
+  for select to anon, authenticated
+  using (bucket_id = 'reports');

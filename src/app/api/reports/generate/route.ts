@@ -17,12 +17,6 @@ export const runtime = "nodejs";
  */
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "ไม่ได้เข้าสู่ระบบ" }, { status: 401 });
-  }
 
   const body = await request.json().catch(() => null);
   const month = Number(body?.month);
@@ -61,7 +55,6 @@ export async function POST(request: Request) {
       period: (report as MonthlyReport).period,
       file_name: fileName,
       storage_path: storagePath,
-      created_by: user.id,
     });
 
     const { data: signed } = await admin.storage.from("reports").createSignedUrl(storagePath, 3600);

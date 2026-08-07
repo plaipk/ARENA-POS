@@ -1,38 +1,11 @@
 -- ARENA POS Pro — core schema
 -- Replaces the 5 Google Sheets (รายรับรายจ่าย, สินค้า, ค้างรับ, เงินสำรองสนาม, Log).
+--
+-- No login/accounts: anyone who opens the app has full access, same as the
+-- original (which only gated destructive actions behind a shared "1234"
+-- prompt). There is no `profiles`/roles table and no `created_by` tracking.
 
 create extension if not exists pgcrypto;
-
--- ============================================================
--- profiles — one row per auth user; role drives what the RPC functions allow.
--- ============================================================
-create table public.profiles (
-  id uuid primary key references auth.users (id) on delete cascade,
-  full_name text,
-  role text not null default 'staff' check (role in ('staff', 'admin')),
-  created_at timestamptz not null default now()
-);
-
--- Auto-create a profile (defaulting to 'staff') whenever someone signs up.
--- Promote the first real user to admin manually afterwards:
---   update public.profiles set role = 'admin' where id = '<uuid>';
-create or replace function public.handle_new_user()
-returns trigger
-language plpgsql
-security definer
-set search_path = public
-as $$
-begin
-  insert into public.profiles (id, full_name, role)
-  values (new.id, new.raw_user_meta_data ->> 'full_name', 'staff')
-  on conflict (id) do nothing;
-  return new;
-end;
-$$;
-
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute function public.handle_new_user();
 
 -- ============================================================
 -- products — replaces "สินค้า". `category` replaces the old
@@ -78,8 +51,6 @@ create table public.transactions (
   mode text not null check (mode in ('income', 'expense', 'stock_in', 'settlement', 'transfer', 'allocation')),
   is_void boolean not null default false,
   void_reason text,
-  created_by uuid references public.profiles (id),
-  voided_by uuid references public.profiles (id),
   voided_at timestamptz,
   created_at timestamptz not null default now()
 );
@@ -106,7 +77,6 @@ create table public.debts (
   remaining_cost numeric not null default 0,
   remaining_profit numeric not null default 0,
   status text not null default 'outstanding' check (status in ('outstanding', 'partial', 'paid', 'void')),
-  created_by uuid references public.profiles (id),
   created_at timestamptz not null default now()
 );
 
@@ -115,8 +85,8 @@ create index debts_status_idx on public.debts (status);
 
 -- ============================================================
 -- debt_payments / debt_payment_allocations — settlement records. The
--- original had no audit trail for who paid down what or how a payment split
--- across debt rows; this adds one and makes a settlement reversible.
+-- original had no way to see how a payment split across debt rows; this
+-- adds one and makes a settlement reversible.
 -- ============================================================
 create table public.debt_payments (
   id uuid primary key default gen_random_uuid(),
@@ -126,7 +96,6 @@ create table public.debt_payments (
   cost_total numeric not null default 0,
   profit_total numeric not null default 0,
   transaction_id uuid references public.transactions (id),
-  created_by uuid references public.profiles (id),
   created_at timestamptz not null default now()
 );
 
@@ -157,7 +126,6 @@ create table public.profit_allocations (
   staff numeric not null,
   total_out numeric not null,
   transaction_id uuid references public.transactions (id),
-  created_by uuid references public.profiles (id),
   created_at timestamptz not null default now()
 );
 
@@ -184,18 +152,17 @@ create table public.reports (
   period text not null,
   file_name text not null,
   storage_path text not null,
-  created_by uuid references public.profiles (id),
   created_at timestamptz not null default now()
 );
 
 create index reports_month_year_idx on public.reports (year, month, created_at desc);
 
 -- ============================================================
--- audit_log — replaces the "Log" sheet.
+-- audit_log — replaces the "Log" sheet. No user identity to attach (no
+-- accounts), so this is just a what/when trail, not a who trail.
 -- ============================================================
 create table public.audit_log (
   id uuid primary key default gen_random_uuid(),
-  actor_id uuid references public.profiles (id),
   action text not null,
   detail text,
   amount numeric,

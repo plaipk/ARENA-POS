@@ -5,7 +5,6 @@
  * (re-apply the Cart/RPC helper types below the generated block if you do).
  */
 
-export type UserRole = "staff" | "admin";
 export type ProductCategory = "merchandise" | "field_rental";
 export type PaymentMethod = "cash" | "transfer";
 export type TransactionCategory =
@@ -18,13 +17,6 @@ export type TransactionCategory =
   | "profit_allocation";
 export type TransactionMode = "income" | "expense" | "stock_in" | "settlement" | "transfer" | "allocation";
 export type DebtStatus = "outstanding" | "partial" | "paid" | "void";
-
-export interface Profile {
-  id: string;
-  full_name: string | null;
-  role: UserRole;
-  created_at: string;
-}
 
 export interface Product {
   id: string;
@@ -54,8 +46,6 @@ export interface Transaction {
   mode: TransactionMode;
   is_void: boolean;
   void_reason: string | null;
-  created_by: string | null;
-  voided_by: string | null;
   voided_at: string | null;
   created_at: string;
 }
@@ -75,7 +65,6 @@ export interface Debt {
   remaining_cost: number;
   remaining_profit: number;
   status: DebtStatus;
-  created_by: string | null;
   created_at: string;
 }
 
@@ -87,7 +76,6 @@ export interface DebtPayment {
   cost_total: number;
   profit_total: number;
   transaction_id: string | null;
-  created_by: string | null;
   created_at: string;
 }
 
@@ -111,7 +99,6 @@ export interface ProfitAllocation {
   staff: number;
   total_out: number;
   transaction_id: string | null;
-  created_by: string | null;
   created_at: string;
 }
 
@@ -122,13 +109,11 @@ export interface Report {
   period: string;
   file_name: string;
   storage_path: string;
-  created_by: string | null;
   created_at: string;
 }
 
 export interface AuditLogEntry {
   id: string;
-  actor_id: string | null;
   action: string;
   detail: string | null;
   amount: number | null;
@@ -211,12 +196,6 @@ export interface SearchResultRow {
 export interface Database {
   public: {
     Tables: {
-      profiles: {
-        Row: { id: string; full_name: string | null; role: "staff" | "admin"; created_at: string };
-        Insert: { id: string; full_name?: string | null; role?: "staff" | "admin"; created_at?: string };
-        Update: { id?: string; full_name?: string | null; role?: "staff" | "admin"; created_at?: string };
-        Relationships: [];
-      };
       products: {
         Row: {
           id: string;
@@ -275,8 +254,6 @@ export interface Database {
           mode: "income" | "expense" | "stock_in" | "settlement" | "transfer" | "allocation";
           is_void: boolean;
           void_reason: string | null;
-          created_by: string | null;
-          voided_by: string | null;
           voided_at: string | null;
           created_at: string;
         };
@@ -304,15 +281,12 @@ export interface Database {
           mode: "income" | "expense" | "stock_in" | "settlement" | "transfer" | "allocation";
           is_void?: boolean;
           void_reason?: string | null;
-          created_by?: string | null;
-          voided_by?: string | null;
           voided_at?: string | null;
           created_at?: string;
         };
         Update: {
           is_void?: boolean;
           void_reason?: string | null;
-          voided_by?: string | null;
           voided_at?: string | null;
         };
         Relationships: [];
@@ -333,7 +307,6 @@ export interface Database {
           remaining_cost: number;
           remaining_profit: number;
           status: "outstanding" | "partial" | "paid" | "void";
-          created_by: string | null;
           created_at: string;
         };
         Insert: {
@@ -351,7 +324,6 @@ export interface Database {
           remaining_cost?: number;
           remaining_profit?: number;
           status?: "outstanding" | "partial" | "paid" | "void";
-          created_by?: string | null;
           created_at?: string;
         };
         Update: {
@@ -371,7 +343,6 @@ export interface Database {
           cost_total: number;
           profit_total: number;
           transaction_id: string | null;
-          created_by: string | null;
           created_at: string;
         };
         Insert: {
@@ -382,7 +353,6 @@ export interface Database {
           cost_total?: number;
           profit_total?: number;
           transaction_id?: string | null;
-          created_by?: string | null;
           created_at?: string;
         };
         Update: { id?: string };
@@ -407,7 +377,6 @@ export interface Database {
           staff: number;
           total_out: number;
           transaction_id: string | null;
-          created_by: string | null;
           created_at: string;
         };
         Insert: {
@@ -422,7 +391,6 @@ export interface Database {
           staff: number;
           total_out: number;
           transaction_id?: string | null;
-          created_by?: string | null;
           created_at?: string;
         };
         Update: { id?: string };
@@ -436,7 +404,6 @@ export interface Database {
           period: string;
           file_name: string;
           storage_path: string;
-          created_by: string | null;
           created_at: string;
         };
         Insert: {
@@ -446,7 +413,6 @@ export interface Database {
           period: string;
           file_name: string;
           storage_path: string;
-          created_by?: string | null;
           created_at?: string;
         };
         Update: { id?: string };
@@ -455,7 +421,6 @@ export interface Database {
       audit_log: {
         Row: {
           id: string;
-          actor_id: string | null;
           action: string;
           detail: string | null;
           amount: number | null;
@@ -464,7 +429,6 @@ export interface Database {
         };
         Insert: {
           id?: string;
-          actor_id?: string | null;
           action: string;
           detail?: string | null;
           amount?: number | null;

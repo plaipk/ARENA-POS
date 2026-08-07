@@ -4,7 +4,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { useInvalidatePosData } from "@/lib/hooks/use-pos-data";
-import { useProfile } from "@/lib/hooks/use-profile";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +20,6 @@ interface SearchResultRow {
 }
 
 export function VoidDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
-  const { isAdmin } = useProfile();
   const invalidate = useInvalidatePosData();
   const [date, setDate] = useState("");
   const [results, setResults] = useState<SearchResultRow[] | null>(null);
@@ -76,12 +74,6 @@ export function VoidDialog({ open, onOpenChange }: { open: boolean; onOpenChange
           <DialogTitle>🔍 ยกเลิกรายการ (Void)</DialogTitle>
         </DialogHeader>
 
-        {!isAdmin && (
-          <p className="rounded-lg bg-amber-50 p-2 text-xs text-amber-700">
-            เฉพาะแอดมินเท่านั้นที่ยกเลิกรายการได้ — คุณดูรายการได้ แต่ปุ่มลบจะถูกปิดไว้
-          </p>
-        )}
-
         <div className="flex gap-2">
           <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           <Button onClick={search} disabled={loading}>
@@ -112,7 +104,7 @@ export function VoidDialog({ open, onOpenChange }: { open: boolean; onOpenChange
                 size="sm"
                 variant="danger"
                 className="rounded-full"
-                disabled={!isAdmin || voiding === r.id}
+                disabled={voiding === r.id}
                 onClick={() => handleVoid(r)}
               >
                 ลบ

@@ -4,7 +4,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { useProducts, useDebtorNames, useInvalidatePosData } from "@/lib/hooks/use-pos-data";
-import { useProfile } from "@/lib/hooks/use-profile";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { BalanceHeader } from "@/components/pos/balance-header";
@@ -36,7 +35,6 @@ export default function PosPage() {
     null | "debtors" | "transfer" | "void" | "report-view" | "report-close" | "archive"
   >(null);
 
-  const { isAdmin } = useProfile();
   const { data: products = [] } = useProducts();
   const { data: debtorNames = [] } = useDebtorNames();
   const invalidate = useInvalidatePosData();
@@ -136,14 +134,10 @@ export default function PosPage() {
             🗂️ รายงานย้อนหลัง (ทั้งปี)
           </Button>
 
-          {isAdmin && (
-            <>
-              <p className="mt-2 text-[0.65rem] font-semibold text-rose-500">โซนปิดงวด — ทำครั้งเดียวต่อเดือน</p>
-              <Button variant="danger" onClick={() => setDialog("report-close")}>
-                🔒 ปิดงวด + จัดสรรกำไร
-              </Button>
-            </>
-          )}
+          <p className="mt-2 text-[0.65rem] font-semibold text-rose-500">โซนปิดงวด — ทำครั้งเดียวต่อเดือน</p>
+          <Button variant="danger" onClick={() => setDialog("report-close")}>
+            🔒 ปิดงวด + จัดสรรกำไร
+          </Button>
         </div>
       </Card>
 
