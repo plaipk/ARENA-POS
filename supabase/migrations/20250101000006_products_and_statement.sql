@@ -86,13 +86,14 @@ begin
   delete from public.products where id = p_id;
   insert into public.audit_log (action, detail) values ('ลบสินค้า', v_name);
   return jsonb_build_object('ok', true, 'message', '✅ ลบสินค้าสำเร็จ!');
-exception when foreign_key_violation then
-  return jsonb_build_object(
-    'ok', false,
-    'message', '❌ ลบไม่ได้ เพราะสินค้านี้มีประวัติการขาย/รับเข้าอยู่ในระบบแล้ว (แก้ไขข้อมูลแทนได้)'
-  );
-exception when others then
-  return jsonb_build_object('ok', false, 'message', '❌ Error: ' || sqlerrm);
+exception
+  when foreign_key_violation then
+    return jsonb_build_object(
+      'ok', false,
+      'message', '❌ ลบไม่ได้ เพราะสินค้านี้มีประวัติการขาย/รับเข้าอยู่ในระบบแล้ว (แก้ไขข้อมูลแทนได้)'
+    );
+  when others then
+    return jsonb_build_object('ok', false, 'message', '❌ Error: ' || sqlerrm);
 end;
 $$;
 
