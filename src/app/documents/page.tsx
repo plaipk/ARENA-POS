@@ -29,6 +29,7 @@ export default function DocumentsPage() {
   const [year, setYear] = useState(now.getFullYear());
   const [search, setSearch] = useState("");
   const [sheetMonth, setSheetMonth] = useState<ArchiveMonth | null>(null);
+  const [pdfListMonth, setPdfListMonth] = useState<ArchiveMonth | null>(null);
   const [busyMonth, setBusyMonth] = useState<number | null>(null);
   const [reportDialog, setReportDialog] = useState<null | "view" | "close">(null);
 
@@ -46,15 +47,25 @@ export default function DocumentsPage() {
       .map((m) => ({ month: m, sortDate: new Date(year, m.month - 1, 25) }));
   }, [months, year, search]);
 
-  async function openReportPdf(m: ArchiveMonth) {
-    if (!m.storage_path) return;
+  async function openPdfFile(storagePath: string) {
     const supabase = createClient();
-    const { data, error } = await supabase.storage.from("reports").createSignedUrl(m.storage_path, 60);
+    const { data, error } = await supabase.storage.from("reports").createSignedUrl(storagePath, 60);
     if (error || !data) {
       toast.error("เปิดไฟล์ไม่สำเร็จ: " + error?.message);
       return;
     }
     window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  }
+
+  // One PDF -> open it directly. More than one (เผลอกดสร้างซ้ำในเดือนนั้น) ->
+  // show every version dated, so any of them can be reopened to re-check.
+  function openReportPdf(m: ArchiveMonth) {
+    if (!m.pdf_versions.length) return;
+    if (m.pdf_versions.length === 1) {
+      openPdfFile(m.pdf_versions[0].storage_path);
+      return;
+    }
+    setPdfListMonth(m);
   }
 
   async function generateReportPdf(m: ArchiveMonth) {
@@ -147,9 +158,9 @@ export default function DocumentsPage() {
                     </td>
                     <td className="py-2 pl-2 pr-4">
                       <div className="flex justify-end gap-1">
-                        {m.has_pdf && (
+                        {m.pdf_versions.length > 0 && (
                           <Button variant="ghost" size="sm" onClick={() => openReportPdf(m)}>
-                            เปิด PDF
+                            เปิด PDF{m.pdf_versions.length > 1 && ` (${m.pdf_versions.length})`}
                           </Button>
                         )}
                         <Button
@@ -222,7 +233,11 @@ export default function DocumentsPage() {
                 </BottomSheetTitle>
               </BottomSheetHeader>
               <div className="flex flex-col gap-2 pt-1">
-                {sheetMonth.has_pdf && <Button onClick={() => openReportPdf(sheetMonth)}>เปิด PDF</Button>}
+                {sheetMonth.pdf_versions.length > 0 && (
+                  <Button onClick={() => openReportPdf(sheetMonth)}>
+                    เปิด PDF{sheetMonth.pdf_versions.length > 1 && ` (${sheetMonth.pdf_versions.length})`}
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   disabled={busyMonth === sheetMonth.month}
@@ -231,6 +246,39 @@ export default function DocumentsPage() {
                   {busyMonth === sheetMonth.month ? "กำลังสร้าง..." : sheetMonth.has_pdf ? "สร้างใหม่" : "สร้าง PDF"}
                 </Button>
                 <Button variant="ghost" onClick={() => setSheetMonth(null)}>
+                  ปิด
+                </Button>
+              </div>
+            </>
+          )}
+        </BottomSheetContent>
+      </BottomSheet>
+
+      <BottomSheet open={!!pdfListMonth} onOpenChange={(o) => !o && setPdfListMonth(null)}>
+        <BottomSheetContent>
+          {pdfListMonth && (
+            <>
+              <BottomSheetHeader>
+                <BottomSheetTitle>
+                  PDF ที่เคยสร้างไว้ — {pdfListMonth.month_name} {year} ({pdfListMonth.pdf_versions.length} ไฟล์)
+                </BottomSheetTitle>
+              </BottomSheetHeader>
+              <div className="flex flex-col gap-2 pt-1">
+                {pdfListMonth.pdf_versions.map((v) => (
+                  <Button
+                    key={v.storage_path}
+                    variant="outline"
+                    className="w-full justify-between"
+                    onClick={() => {
+                      openPdfFile(v.storage_path);
+                      setPdfListMonth(null);
+                    }}
+                  >
+                    <span>เปิดไฟล์</span>
+                    <span className="text-xs text-slate-400">สร้างเมื่อ {v.created_at}</span>
+                  </Button>
+                ))}
+                <Button variant="ghost" onClick={() => setPdfListMonth(null)}>
                   ปิด
                 </Button>
               </div>
