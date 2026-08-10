@@ -29,17 +29,23 @@ export function ProductFormDialog({
   const [stock, setStock] = useState("0");
   const [saving, setSaving] = useState(false);
 
-  // Re-seed the form from `product` the moment the dialog opens, rather than
-  // in an effect (React flags setState-during-effect as a cascading-render smell).
-  function handleOpenChange(next: boolean) {
-    if (next) {
+  // Re-seed the form from `product` the moment the dialog opens. This has to
+  // run during render (React's documented pattern for "adjust state when a
+  // prop changes"), not in an onOpenChange handler or an effect: Radix only
+  // calls onOpenChange for transitions IT initiates (Escape, overlay click,
+  // close button) — when the parent flips `open` externally (setEditing(p),
+  // no DialogTrigger involved at all here), onOpenChange never fires, so
+  // seeding there was silently dead code and the form opened blank/stale.
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) {
       setName(product?.name ?? "");
       setCategory(product?.category ?? "merchandise");
       setCost(String(product?.cost ?? 0));
       setPrice(String(product?.price ?? 0));
       setStock(String(product?.stock ?? 0));
     }
-    onOpenChange(next);
   }
 
   async function handleSave() {
@@ -69,7 +75,7 @@ export function ProductFormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{product ? "แก้ไขสินค้า" : "+ เพิ่มสินค้าใหม่"}</DialogTitle>

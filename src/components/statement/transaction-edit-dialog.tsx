@@ -47,10 +47,16 @@ export function TransactionEditDialog({
   const [category, setCategory] = useState<TransactionCategory>("general_expense");
   const [saving, setSaving] = useState(false);
 
-  // Re-seed the form from `transaction` the moment the dialog opens, rather
-  // than in an effect (React flags setState-during-effect as a cascading-render smell).
-  function handleOpenChange(next: boolean) {
-    if (next && transaction) {
+  // Re-seed the form from `transaction` the moment the dialog opens. Runs
+  // during render (React's documented pattern for "adjust state when a prop
+  // changes") — not an onOpenChange handler or an effect. Radix only calls
+  // onOpenChange for transitions it initiates itself (Escape/overlay/close
+  // button), not when the parent flips `open` externally the way every
+  // dialog here does, so seeding there was silently dead code.
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open && transaction) {
       setOccurredAt(toLocalInputValue(transaction.occurred_at));
       setDetail(transaction.detail);
       setIncome(String(transaction.income));
@@ -58,7 +64,6 @@ export function TransactionEditDialog({
       setPaymentMethod(transaction.payment_method);
       setCategory(transaction.category);
     }
-    onOpenChange(next);
   }
 
   async function handleSave() {
@@ -86,7 +91,7 @@ export function TransactionEditDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>แก้ไขรายการ</DialogTitle>
