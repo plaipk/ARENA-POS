@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { FileSpreadsheet } from "lucide-react";
+import { FileSpreadsheet, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { useReportArchive } from "@/lib/hooks/use-report-archive";
@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BottomSheet, BottomSheetContent, BottomSheetHeader, BottomSheetTitle } from "@/components/ui/bottom-sheet";
 import { ReportDialog } from "@/components/modals/report-dialog";
-import type { ArchiveMonth } from "@/lib/types/database";
+import type { ArchiveMonth, ReportPdfVersion } from "@/lib/types/database";
 
 function formatDate(d: Date) {
   return d.toLocaleString("th-TH", { day: "2-digit", month: "2-digit", year: "numeric" });
@@ -57,15 +57,25 @@ export default function DocumentsPage() {
     window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   }
 
-  // One PDF -> open it directly. More than one (เผลอกดสร้างซ้ำในเดือนนั้น) ->
-  // show every version dated, so any of them can be reopened to re-check.
+  // Always go through the version-list sheet (even for a single file) — it's
+  // the one place with a delete action per PDF, dated so it's clear which is which.
   function openReportPdf(m: ArchiveMonth) {
     if (!m.pdf_versions.length) return;
-    if (m.pdf_versions.length === 1) {
-      openPdfFile(m.pdf_versions[0].storage_path);
+    setPdfListMonth(m);
+  }
+
+  async function deleteReportPdf(v: ReportPdfVersion) {
+    if (!confirm(`ยืนยันลบไฟล์นี้ (สร้างเมื่อ ${v.created_at})?`)) return;
+    setPdfListMonth(null);
+    const supabase = createClient();
+    const { data, error } = await supabase.rpc("delete_report", { p_id: v.id });
+    if (error || !data?.ok) {
+      toast.error((error?.message ?? data?.message) || "ลบไม่สำเร็จ");
       return;
     }
-    setPdfListMonth(m);
+    if (data.storage_path) await supabase.storage.from("reports").remove([data.storage_path]);
+    toast.success(data.message ?? "ลบไฟล์สำเร็จ!");
+    invalidateReports();
   }
 
   async function generateReportPdf(m: ArchiveMonth) {
@@ -265,18 +275,22 @@ export default function DocumentsPage() {
               </BottomSheetHeader>
               <div className="flex flex-col gap-2 pt-1">
                 {pdfListMonth.pdf_versions.map((v) => (
-                  <Button
-                    key={v.storage_path}
-                    variant="outline"
-                    className="w-full justify-between"
-                    onClick={() => {
-                      openPdfFile(v.storage_path);
-                      setPdfListMonth(null);
-                    }}
-                  >
-                    <span>เปิดไฟล์</span>
-                    <span className="text-xs text-slate-400">สร้างเมื่อ {v.created_at}</span>
-                  </Button>
+                  <div key={v.id} className="flex items-center gap-1.5">
+                    <Button
+                      variant="outline"
+                      className="w-full flex-1 justify-between"
+                      onClick={() => {
+                        openPdfFile(v.storage_path);
+                        setPdfListMonth(null);
+                      }}
+                    >
+                      <span>เปิดไฟล์</span>
+                      <span className="text-xs text-slate-400">สร้างเมื่อ {v.created_at}</span>
+                    </Button>
+                    <Button variant="outlineDanger" size="icon" onClick={() => deleteReportPdf(v)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 ))}
                 <Button variant="ghost" onClick={() => setPdfListMonth(null)}>
                   ปิด

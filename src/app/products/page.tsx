@@ -1,26 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { useProducts, useInvalidatePosData } from "@/lib/hooks/use-pos-data";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { BottomSheet, BottomSheetContent, BottomSheetHeader, BottomSheetTitle } from "@/components/ui/bottom-sheet";
 import { ProductFormDialog } from "@/components/products/product-form-dialog";
 import { StockTakeDialog } from "@/components/products/stock-take-dialog";
+import { StockTakeHistoryDialog } from "@/components/products/stock-take-history-dialog";
 import { formatMoney } from "@/lib/utils";
 import type { Product } from "@/lib/types/database";
 
 export default function ProductsPage() {
-  const { data: products = [], isLoading } = useProducts();
+  const { data: allProducts = [], isLoading } = useProducts();
   const invalidate = useInvalidatePosData();
   const [editing, setEditing] = useState<Product | null | undefined>(undefined);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [stockTakeOpen, setStockTakeOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [sheetProduct, setSheetProduct] = useState<Product | null>(null);
+  const [search, setSearch] = useState("");
+
+  const products = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return q ? allProducts.filter((p) => p.name.toLowerCase().includes(q)) : allProducts;
+  }, [allProducts, search]);
 
   async function handleDelete(p: Product) {
     if (!confirm(`ยืนยันลบสินค้า "${p.name}"?`)) return;
@@ -41,17 +51,27 @@ export default function ProductsPage() {
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-3 p-3 pb-8">
       <h1 className="text-lg font-bold text-slate-800">📦 จัดการสินค้า</h1>
       <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
+        <Button variant="outline" onClick={() => setHistoryOpen(true)}>
+          🕓 ประวัตินับสต็อก
+        </Button>
         <Button variant="outline" onClick={() => setStockTakeOpen(true)}>
           🔢 นับสต็อก
         </Button>
-        <Button onClick={() => setEditing(null)}>+ เพิ่มสินค้า</Button>
+        <Button className="col-span-2 sm:col-span-1" onClick={() => setEditing(null)}>
+          + เพิ่มสินค้า
+        </Button>
       </div>
+
+      <Card>
+        <Label>ค้นหาสินค้า</Label>
+        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="พิมพ์ชื่อสินค้า..." />
+      </Card>
 
       <Card className="p-0">
         {isLoading && <p className="px-4 py-10 text-center text-sm text-slate-400">กำลังโหลด...</p>}
         {!isLoading && !products.length && (
           <p className="px-4 py-10 text-center text-sm text-slate-400">
-            ยังไม่มีสินค้า กด &quot;+ เพิ่มสินค้า&quot; เพื่อเริ่ม
+            {allProducts.length ? "ไม่พบสินค้าที่ค้นหา" : 'ยังไม่มีสินค้า กด "+ เพิ่มสินค้า" เพื่อเริ่ม'}
           </p>
         )}
 
@@ -172,9 +192,10 @@ export default function ProductsPage() {
       <StockTakeDialog
         open={stockTakeOpen}
         onOpenChange={setStockTakeOpen}
-        products={products}
+        products={allProducts}
         onSaved={invalidate}
       />
+      <StockTakeHistoryDialog open={historyOpen} onOpenChange={setHistoryOpen} />
     </main>
   );
 }

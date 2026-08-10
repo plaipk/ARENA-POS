@@ -5,7 +5,7 @@ import type { MonthlyReport } from "@/lib/types/database";
 const money = (n: number) => (Number(n) || 0).toLocaleString("th-TH", { maximumFractionDigits: 2 });
 
 const styles = StyleSheet.create({
-  page: { padding: 28, fontFamily: "Noto Sans Thai", fontSize: 10, color: "#333" },
+  page: { padding: 28, fontFamily: "Sarabun", fontSize: 10, color: "#333" },
   header: { textAlign: "center", marginBottom: 10 },
   h2: { fontSize: 15, color: "#1a237e", fontWeight: 700 },
   h3: { fontSize: 12, marginTop: 2 },
@@ -124,20 +124,20 @@ export function MonthlyReportDocument({
 
         <Text style={styles.sectionTitle}>การจัดสรรงบประมาณจากกำไรสุทธิ</Text>
         <View style={styles.row}>
-          <Text>1. ทุนการศึกษา (30%)</Text>
-          <Text>{money(a.scholarship)} บาท</Text>
+          <Text wrap={false}>1. ทุนการศึกษา (30%)</Text>
+          <Text wrap={false}>{money(a.scholarship)} บาท</Text>
         </View>
         <View style={styles.row}>
-          <Text>2. สำรองฉุกเฉิน (30%)</Text>
-          <Text>{money(a.emergency)} บาท</Text>
+          <Text wrap={false}>2. สำรองฉุกเฉิน (30%)</Text>
+          <Text wrap={false}>{money(a.emergency)} บาท</Text>
         </View>
         <View style={styles.row}>
-          <Text>3. หมุนเวียนสนาม (30% - กลับเข้าทุน)</Text>
-          <Text>{money(a.rotate)} บาท</Text>
+          <Text wrap={false}>3. หมุนเวียนสนาม (30% - กลับเข้าทุน)</Text>
+          <Text wrap={false}>{money(a.rotate)} บาท</Text>
         </View>
         <View style={styles.row}>
-          <Text>4. ค่าตอบแทนเจ้าหน้าที่ (10%)</Text>
-          <Text>{money(a.staff)} บาท</Text>
+          <Text wrap={false}>4. ค่าตอบแทนเจ้าหน้าที่ (10%)</Text>
+          <Text wrap={false}>{money(a.staff)} บาท</Text>
         </View>
 
         <View style={styles.balanceBox}>
