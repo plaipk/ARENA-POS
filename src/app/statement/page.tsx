@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Pencil, Ban } from "lucide-react";
+import { Pencil, Ban } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { useInvalidatePosData } from "@/lib/hooks/use-pos-data";
@@ -82,11 +81,6 @@ export default function StatementPage() {
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-3 p-3 pb-8">
       <div className="flex items-center gap-2">
-        <Link href="/">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
         <h1 className="text-lg font-bold text-slate-800">📑 สเตทเมนต์ (รายการทั้งหมด)</h1>
       </div>
 

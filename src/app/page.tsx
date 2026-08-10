@@ -16,7 +16,6 @@ import { DebtorsDialog } from "@/components/modals/debtors-dialog";
 import { TransferDialog } from "@/components/modals/transfer-dialog";
 import { VoidDialog } from "@/components/modals/void-dialog";
 import { ReportDialog } from "@/components/modals/report-dialog";
-import { ArchiveDialog } from "@/components/modals/archive-dialog";
 import type { CartLine, TransactionMode } from "@/lib/types/database";
 
 const PAY_TYPE_TO_DB: Record<PayType, string> = {
@@ -33,7 +32,7 @@ export default function PosPage() {
   const [saving, setSaving] = useState(false);
 
   const [dialog, setDialog] = useState<
-    null | "debtors" | "transfer" | "void" | "report-view" | "report-close" | "archive"
+    null | "debtors" | "transfer" | "void" | "report-view" | "report-close"
   >(null);
 
   const { data: products = [] } = useProducts();
@@ -87,19 +86,6 @@ export default function PosPage() {
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-3 p-3 pb-8">
       <BalanceHeader />
 
-      <div className="flex gap-2">
-        <Link href="/statement" className="flex-1">
-          <Button variant="outline" size="sm" className="w-full">
-            📑 สเตทเมนต์
-          </Button>
-        </Link>
-        <Link href="/products" className="flex-1">
-          <Button variant="outline" size="sm" className="w-full">
-            📦 จัดการสินค้า
-          </Button>
-        </Link>
-      </div>
-
       <Card>
         <ModeSwitch mode={mode} onChange={handleModeChange} />
         <SellForm mode={mode} products={products} onAdd={(line) => setCart((c) => [...c, line])} />
@@ -144,10 +130,11 @@ export default function PosPage() {
           >
             📄 ดูรายงาน / ดาวน์โหลด PDF
           </Button>
-          <Button variant="outline" onClick={() => setDialog("archive")}>
-            🗂️ รายงานย้อนหลัง (ทั้งปี)
-          </Button>
-
+          <Link href="/documents">
+            <Button variant="outline" className="w-full">
+              🗂️ รายงานย้อนหลัง / เอกสารทั้งหมด
+            </Button>
+          </Link>
           <p className="mt-2 text-[0.65rem] font-semibold text-rose-500">โซนปิดงวด — ทำครั้งเดียวต่อเดือน</p>
           <Button variant="danger" onClick={() => setDialog("report-close")}>
             🔒 ปิดงวด + จัดสรรกำไร
@@ -168,7 +155,6 @@ export default function PosPage() {
         open={dialog === "report-close"}
         onOpenChange={(o) => setDialog(o ? "report-close" : null)}
       />
-      <ArchiveDialog open={dialog === "archive"} onOpenChange={(o) => setDialog(o ? "archive" : null)} />
     </main>
   );
 }
