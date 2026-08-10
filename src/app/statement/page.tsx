@@ -43,15 +43,34 @@ export default function StatementPage() {
     queryKey: ["statement", from, to],
     queryFn: async () => {
       const supabase = createClient();
+
+      // Opening balance: net of every non-void transaction strictly before "from",
+      // so "คงเหลือ" reads as one running total across the whole ledger (matches
+      // the old sheet's single combined cash+transfer running balance column),
+      // not just a total reset to 0 at the start of whatever range is selected.
+      const { data: priorRows, error: priorError } = await supabase
+        .from("transactions")
+        .select("income, expense")
+        .eq("is_void", false)
+        .lt("occurred_at", `${from}T00:00:00`);
+      if (priorError) throw priorError;
+      const opening = (priorRows ?? []).reduce((s, r) => s + r.income - r.expense, 0);
+
       const { data, error } = await supabase
         .from("transactions")
         .select("*")
         .gte("occurred_at", `${from}T00:00:00`)
         .lte("occurred_at", `${to}T23:59:59`)
-        .order("occurred_at", { ascending: false })
+        .order("occurred_at", { ascending: true })
         .limit(500);
       if (error) throw error;
-      return data as Transaction[];
+
+      let running = opening;
+      const withBalance = (data as Transaction[]).map((t) => {
+        if (!t.is_void) running += t.income - t.expense;
+        return { ...t, balance: running };
+      });
+      return withBalance.reverse(); // newest first for display
     },
   });
 
@@ -113,6 +132,9 @@ export default function StatementPage() {
                 <th className="px-2 py-2">หมวดหมู่</th>
                 <th className="px-2 py-2 text-right">รายรับ</th>
                 <th className="px-2 py-2 text-right">รายจ่าย</th>
+                <th className="px-2 py-2 text-right">คงเหลือ</th>
+                <th className="px-2 py-2 text-right">ต้นทุน</th>
+                <th className="px-2 py-2 text-right">กำไร</th>
                 <th className="px-2 py-2">ชำระ</th>
                 <th className="py-2 pl-2"></th>
               </tr>
@@ -141,6 +163,13 @@ export default function StatementPage() {
                   </td>
                   <td className="px-2 py-2 text-right text-rose-600">
                     {t.expense > 0 ? formatMoney(t.expense) : ""}
+                  </td>
+                  <td className="px-2 py-2 text-right font-medium text-slate-700">{formatMoney(t.balance)}</td>
+                  <td className="px-2 py-2 text-right text-slate-500">
+                    {t.cost_total > 0 ? formatMoney(t.cost_total) : ""}
+                  </td>
+                  <td className="px-2 py-2 text-right text-indigo-600">
+                    {t.profit_total !== 0 ? formatMoney(t.profit_total) : ""}
                   </td>
                   <td className="px-2 py-2 text-xs">{t.payment_method === "cash" ? "เงินสด" : "โอน"}</td>
                   <td className="py-2 pl-2">

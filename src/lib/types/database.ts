@@ -495,6 +495,10 @@ export interface Database {
         Args: { p_id: string };
         Returns: SaveTransactionResult;
       };
+      record_stock_take: {
+        Args: { p_items: { product_id: string; counted_stock: number }[] };
+        Returns: SaveTransactionResult & { adjusted?: number; unchanged?: number };
+      };
       update_transaction: {
         Args: {
           p_id: string;
