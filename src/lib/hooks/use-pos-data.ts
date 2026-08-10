@@ -54,5 +54,6 @@ export function useInvalidatePosData() {
     queryClient.invalidateQueries({ queryKey: ["debtor-names"] });
     queryClient.invalidateQueries({ queryKey: ["debtor-summary"] });
     queryClient.invalidateQueries({ queryKey: ["report-archive"] });
+    queryClient.invalidateQueries({ queryKey: ["documents"] });
   };
 }

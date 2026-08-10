@@ -112,6 +112,16 @@ export interface Report {
   created_at: string;
 }
 
+export interface DocumentRecord {
+  id: string;
+  title: string;
+  category: string;
+  description: string | null;
+  file_name: string;
+  storage_path: string;
+  uploaded_at: string;
+}
+
 export interface AuditLogEntry {
   id: string;
   action: string;
@@ -418,6 +428,28 @@ export interface Database {
         Update: { id?: string };
         Relationships: [];
       };
+      documents: {
+        Row: {
+          id: string;
+          title: string;
+          category: string;
+          description: string | null;
+          file_name: string;
+          storage_path: string;
+          uploaded_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          category?: string;
+          description?: string | null;
+          file_name: string;
+          storage_path: string;
+          uploaded_at?: string;
+        };
+        Update: { id?: string };
+        Relationships: [];
+      };
       audit_log: {
         Row: {
           id: string;
@@ -506,6 +538,20 @@ export interface Database {
           p_category: TransactionCategory;
         };
         Returns: SaveTransactionResult;
+      };
+      save_document_record: {
+        Args: {
+          p_title: string;
+          p_category: string;
+          p_file_name: string;
+          p_storage_path: string;
+          p_description: string | null;
+        };
+        Returns: SaveTransactionResult & { id?: string };
+      };
+      delete_document: {
+        Args: { p_id: string };
+        Returns: SaveTransactionResult & { storage_path?: string };
       };
     };
   };
