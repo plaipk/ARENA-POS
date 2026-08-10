@@ -237,8 +237,9 @@ export default function DocumentsPage() {
                           </>
                         ) : (
                           <>
-                            <Button variant="ghost" size="icon" onClick={() => openDocumentFile(r.document)}>
-                              <ExternalLink className="h-3.5 w-3.5" />
+                            <Button variant="ghost" size="sm" onClick={() => openDocumentFile(r.document)}>
+                              <ExternalLink className="mr-1 h-3.5 w-3.5" />
+                              ดูเอกสาร
                             </Button>
                             <Button
                               variant="ghost"
@@ -320,7 +321,7 @@ export default function DocumentsPage() {
                   </>
                 ) : (
                   <>
-                    <Button onClick={() => openDocumentFile(sheetRow.document)}>เปิดไฟล์</Button>
+                    <Button onClick={() => openDocumentFile(sheetRow.document)}>ดูเอกสาร</Button>
                     <Button variant="danger" onClick={() => handleDeleteDocument(sheetRow.document)}>
                       ลบเอกสาร
                     </Button>
