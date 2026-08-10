@@ -5,7 +5,7 @@ import type { MonthlyReport } from "@/lib/types/database";
 const money = (n: number) => (Number(n) || 0).toLocaleString("th-TH", { maximumFractionDigits: 2 });
 
 const styles = StyleSheet.create({
-  page: { padding: 28, fontFamily: "Sarabun", fontSize: 10, color: "#333" },
+  page: { padding: 28, fontFamily: "Noto Sans Thai", fontSize: 10, color: "#333" },
   header: { textAlign: "center", marginBottom: 10 },
   h2: { fontSize: 15, color: "#1a237e", fontWeight: 700 },
   h3: { fontSize: 12, marginTop: 2 },
@@ -20,10 +20,11 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: "row",
-    justifyContent: "space-between",
     paddingVertical: 3,
     borderBottom: "1px dashed #eee",
   },
+  rowLabel: { flex: 1 },
+  rowValue: { textAlign: "right", fontWeight: 700 },
   rowBold: { fontWeight: 700, backgroundColor: "#fafafa" },
   profitBox: {
     backgroundColor: "#e8f5e9",
@@ -74,42 +75,42 @@ export function MonthlyReportDocument({
         <Text style={styles.sectionTitle}>รายละเอียดรายรับ</Text>
         {report.product_sales_total > 0 && (
           <View style={styles.row}>
-            <Text>
+            <Text style={styles.rowLabel}>
               - รายได้ขายสินค้า{" "}
               <Text style={{ fontSize: 8, color: "#2e7d32" }}>
                 (กำไรส่วนนี้: {money(report.total_profit_from_sales)} บาท)
               </Text>
             </Text>
-            <Text>{money(report.product_sales_total)} บาท</Text>
+            <Text style={styles.rowValue}>{money(report.product_sales_total)} บาท</Text>
           </View>
         )}
         {report.other_income_items.map((item, i) => (
           <View style={styles.row} key={i}>
-            <Text>- {item.name}</Text>
-            <Text>{money(item.amount)} บาท</Text>
+            <Text style={styles.rowLabel}>- {item.name}</Text>
+            <Text style={styles.rowValue}>{money(item.amount)} บาท</Text>
           </View>
         ))}
         <View style={[styles.row, styles.rowBold]}>
-          <Text>รายรับรวมทั้งสิ้น</Text>
-          <Text>{money(report.total_income)} บาท</Text>
+          <Text style={styles.rowLabel}>รายรับรวมทั้งสิ้น</Text>
+          <Text style={styles.rowValue}>{money(report.total_income)} บาท</Text>
         </View>
 
         <Text style={styles.sectionTitle}>รายละเอียดรายจ่าย</Text>
         {report.stock_expense > 0 && (
           <View style={styles.row}>
-            <Text>- ซื้อของ / เติมสินค้า (ยอดรวม)</Text>
-            <Text>{money(report.stock_expense)} บาท</Text>
+            <Text style={styles.rowLabel}>- ซื้อของ / เติมสินค้า (ยอดรวม)</Text>
+            <Text style={styles.rowValue}>{money(report.stock_expense)} บาท</Text>
           </View>
         )}
         {report.general_expenses.map((item, i) => (
           <View style={styles.row} key={i}>
-            <Text>- {item.name}</Text>
-            <Text>{money(item.amount)} บาท</Text>
+            <Text style={styles.rowLabel}>- {item.name}</Text>
+            <Text style={styles.rowValue}>{money(item.amount)} บาท</Text>
           </View>
         ))}
         <View style={[styles.row, styles.rowBold]}>
-          <Text>รายจ่ายรวมทั้งสิ้น</Text>
-          <Text>{money(report.total_expense)} บาท</Text>
+          <Text style={styles.rowLabel}>รายจ่ายรวมทั้งสิ้น</Text>
+          <Text style={styles.rowValue}>{money(report.total_expense)} บาท</Text>
         </View>
 
         <View style={styles.profitBox}>
@@ -124,20 +125,20 @@ export function MonthlyReportDocument({
 
         <Text style={styles.sectionTitle}>การจัดสรรงบประมาณจากกำไรสุทธิ</Text>
         <View style={styles.row}>
-          <Text wrap={false}>1. ทุนการศึกษา (30%)</Text>
-          <Text wrap={false}>{money(a.scholarship)} บาท</Text>
+          <Text style={styles.rowLabel}>1. ทุนการศึกษา (30%)</Text>
+          <Text style={styles.rowValue}>{money(a.scholarship)} บาท</Text>
         </View>
         <View style={styles.row}>
-          <Text wrap={false}>2. สำรองฉุกเฉิน (30%)</Text>
-          <Text wrap={false}>{money(a.emergency)} บาท</Text>
+          <Text style={styles.rowLabel}>2. สำรองฉุกเฉิน (30%)</Text>
+          <Text style={styles.rowValue}>{money(a.emergency)} บาท</Text>
         </View>
         <View style={styles.row}>
-          <Text wrap={false}>3. หมุนเวียนสนาม (30% - กลับเข้าทุน)</Text>
-          <Text wrap={false}>{money(a.rotate)} บาท</Text>
+          <Text style={styles.rowLabel}>3. หมุนเวียนสนาม (30% - กลับเข้าทุน)</Text>
+          <Text style={styles.rowValue}>{money(a.rotate)} บาท</Text>
         </View>
         <View style={styles.row}>
-          <Text wrap={false}>4. ค่าตอบแทนเจ้าหน้าที่ (10%)</Text>
-          <Text wrap={false}>{money(a.staff)} บาท</Text>
+          <Text style={styles.rowLabel}>4. ค่าตอบแทนเจ้าหน้าที่ (10%)</Text>
+          <Text style={styles.rowValue}>{money(a.staff)} บาท</Text>
         </View>
 
         <View style={styles.balanceBox}>
