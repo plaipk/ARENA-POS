@@ -14,11 +14,17 @@ const prompt = Prompt({
 export const metadata: Metadata = {
   title: "ARENA POS Pro",
   description: "ระบบขายหน้าร้านและบัญชีสนามฟุตบอล",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "ARENA POS",
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: "#4f46e5",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
