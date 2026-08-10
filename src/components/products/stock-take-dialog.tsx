@@ -27,11 +27,15 @@ export function StockTakeDialog({
   const [saving, setSaving] = useState(false);
 
   // Re-seed every field from the current stock the moment the dialog opens.
-  function handleOpenChange(next: boolean) {
-    if (next) {
+  // Runs during render — onOpenChange never fires when the parent flips
+  // `open` externally (no DialogTrigger involved), only for Radix-initiated
+  // close transitions.
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) {
       setCounts(Object.fromEntries(products.map((p) => [p.id, String(p.stock)])));
     }
-    onOpenChange(next);
   }
 
   async function handleSave() {
@@ -59,7 +63,7 @@ export function StockTakeDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>🔢 นับสต็อกจริง</DialogTitle>

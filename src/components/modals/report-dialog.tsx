@@ -29,11 +29,14 @@ export function ReportDialog({
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<{ fileName: string; url: string | null } | null>(null);
 
-  // Clear the previous run's result the moment the dialog opens again, rather than
-  // in an effect (React flags setState-during-effect as a cascading-render smell).
-  function handleOpenChange(next: boolean) {
-    if (next) setDone(null);
-    onOpenChange(next);
+  // Clear the previous run's result the moment the dialog opens again. Runs
+  // during render — onOpenChange never fires when the parent flips `open`
+  // externally (no DialogTrigger involved here), only for Radix-initiated
+  // close transitions, so the old success banner would otherwise linger.
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) setDone(null);
   }
 
   const { data: report, isLoading } = useQuery({
@@ -82,7 +85,7 @@ export function ReportDialog({
   const years = [now.getFullYear() + 1, now.getFullYear(), now.getFullYear() - 1, now.getFullYear() - 2];
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{isClose ? "🔒 ปิดงวด + จัดสรรกำไร" : "📄 รายงาน (ดูอย่างเดียว)"}</DialogTitle>
