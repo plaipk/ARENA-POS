@@ -123,14 +123,15 @@ export interface AuditLogEntry {
 }
 
 /** Cart line sent to save_transaction(); mirrors the old client-side `cart` array.
- * `is_other`: free-text income line not tied to any product (e.g. "ยอดยกมา") —
- * only meaningful in income mode; snake_case because it's sent to the RPC as-is. */
+ * `cost`: cost per unit, only sent (and only required) when `name` doesn't match
+ * any real product in income mode — e.g. "ยอดยกมา" (cost = price -> zero profit)
+ * or an ad-hoc "ค่าเช่าสนาม" (cost = 0 -> full price counts as profit). */
 export interface CartLine {
   name: string;
   qty: number;
   price: number;
   total: number;
-  is_other?: boolean;
+  cost?: number;
 }
 
 export interface SaveTransactionResult {
