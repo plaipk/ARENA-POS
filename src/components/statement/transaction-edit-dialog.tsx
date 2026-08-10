@@ -18,6 +18,7 @@ const CATEGORY_LABELS: Record<TransactionCategory, string> = {
   debt_settlement: "รับชำระหนี้",
   transfer: "โยกเงิน",
   profit_allocation: "จัดสรรกำไร",
+  other_income: "รายได้อื่นๆ",
 };
 
 /** dd/mm/yyyy hh:mm formatted for a <input type="datetime-local"> value, in local time. */

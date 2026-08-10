@@ -23,6 +23,7 @@ const CATEGORY_LABELS: Record<Transaction["category"], string> = {
   debt_settlement: "รับชำระหนี้",
   transfer: "โยกเงิน",
   profit_allocation: "จัดสรรกำไร",
+  other_income: "รายได้อื่นๆ",
 };
 
 function defaultDate(daysAgo: number) {
