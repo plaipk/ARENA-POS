@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BottomSheet, BottomSheetContent, BottomSheetHeader, BottomSheetTitle } from "@/components/ui/bottom-sheet";
+import { ReportDialog } from "@/components/modals/report-dialog";
 import type { ArchiveMonth } from "@/lib/types/database";
 
 function formatDate(d: Date) {
@@ -29,6 +30,7 @@ export default function DocumentsPage() {
   const [search, setSearch] = useState("");
   const [sheetMonth, setSheetMonth] = useState<ArchiveMonth | null>(null);
   const [busyMonth, setBusyMonth] = useState<number | null>(null);
+  const [reportDialog, setReportDialog] = useState<null | "view" | "close">(null);
 
   const queryClient = useQueryClient();
   const { data: months = [], isLoading } = useReportArchive(year);
@@ -190,6 +192,24 @@ export default function DocumentsPage() {
         )}
       </Card>
 
+      <Card className="border border-rose-100 bg-rose-50/40">
+        <p className="mb-2 text-[0.65rem] font-semibold uppercase tracking-wide text-rose-500">
+          โซนปิดงวด — ทำครั้งเดียวต่อเดือน
+        </p>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <Button
+            variant="outline"
+            className="w-full border-slate-800 bg-slate-900 text-white hover:bg-slate-800"
+            onClick={() => setReportDialog("view")}
+          >
+            📄 ดูรายงานเดือนนี้ (รายละเอียด)
+          </Button>
+          <Button variant="danger" onClick={() => setReportDialog("close")}>
+            🔒 ปิดงวด + จัดสรรกำไร
+          </Button>
+        </div>
+      </Card>
+
       <BottomSheet open={!!sheetMonth} onOpenChange={(o) => !o && setSheetMonth(null)}>
         <BottomSheetContent>
           {sheetMonth && (
@@ -216,6 +236,17 @@ export default function DocumentsPage() {
           )}
         </BottomSheetContent>
       </BottomSheet>
+
+      <ReportDialog
+        mode="view"
+        open={reportDialog === "view"}
+        onOpenChange={(o) => setReportDialog(o ? "view" : null)}
+      />
+      <ReportDialog
+        mode="close"
+        open={reportDialog === "close"}
+        onOpenChange={(o) => setReportDialog(o ? "close" : null)}
+      />
     </main>
   );
 }

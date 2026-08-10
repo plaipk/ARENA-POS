@@ -20,8 +20,7 @@ export function CartList({
       {cart.map((item, i) => (
         <div
           key={i}
-          className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50/60 py-2 pl-3 pr-2"
-          style={{ borderLeft: "5px solid #7209b7" }}
+          className="flex items-center justify-between rounded-2xl border border-slate-100 border-l-4 border-l-indigo-500 bg-slate-50/60 py-2 pl-3 pr-2"
         >
           <div className="text-sm">
             <b>{item.name}</b>

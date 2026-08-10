@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { useProducts, useDebtorNames, useInvalidatePosData } from "@/lib/hooks/use-pos-data";
@@ -15,7 +14,6 @@ import { PaymentSection, type PayType } from "@/components/pos/payment-section";
 import { DebtorsDialog } from "@/components/modals/debtors-dialog";
 import { TransferDialog } from "@/components/modals/transfer-dialog";
 import { VoidDialog } from "@/components/modals/void-dialog";
-import { ReportDialog } from "@/components/modals/report-dialog";
 import type { CartLine, TransactionMode } from "@/lib/types/database";
 
 const PAY_TYPE_TO_DB: Record<PayType, string> = {
@@ -31,9 +29,7 @@ export default function PosPage() {
   const [customerName, setCustomerName] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const [dialog, setDialog] = useState<
-    null | "debtors" | "transfer" | "void" | "report-view" | "report-close"
-  >(null);
+  const [dialog, setDialog] = useState<null | "debtors" | "transfer" | "void">(null);
 
   const { data: products = [] } = useProducts();
   const { data: debtorNames = [] } = useDebtorNames();
@@ -87,6 +83,7 @@ export default function PosPage() {
       <BalanceHeader />
 
       <Card>
+        <p className="mb-2 text-[0.65rem] font-semibold uppercase tracking-wide text-slate-400">ขายสินค้า</p>
         <ModeSwitch mode={mode} onChange={handleModeChange} />
         <SellForm mode={mode} products={products} onAdd={(line) => setCart((c) => [...c, line])} />
         <CartList cart={cart} onRemove={(i) => setCart((c) => c.filter((_, idx) => idx !== i))} />
@@ -104,8 +101,11 @@ export default function PosPage() {
         <Button onClick={handleSubmit} disabled={saving} size="lg" className="mt-3 w-full">
           {saving ? "กำลังบันทึก..." : "💾 บันทึกข้อมูล"}
         </Button>
+      </Card>
 
-        <div className="mt-2 grid grid-cols-1 gap-2">
+      <Card>
+        <p className="mb-2 text-[0.65rem] font-semibold uppercase tracking-wide text-slate-400">เมนูอื่นๆ</p>
+        <div className="grid grid-cols-1 gap-2">
           <Button variant="outline" size="sm" onClick={() => setDialog("transfer")}>
             🔄 โยกเงิน (เงินสด ↔ เงินโอน)
           </Button>
@@ -118,43 +118,9 @@ export default function PosPage() {
         </div>
       </Card>
 
-      <Card>
-        <p className="mb-2 text-[0.65rem] font-semibold uppercase tracking-wide text-slate-400">
-          รายงานประจำเดือน (26-25)
-        </p>
-        <div className="grid grid-cols-1 gap-2">
-          <Button
-            variant="ghost"
-            className="border border-slate-800 bg-slate-900 text-white hover:bg-slate-800"
-            onClick={() => setDialog("report-view")}
-          >
-            📄 ดูรายงาน / ดาวน์โหลด PDF
-          </Button>
-          <Link href="/documents">
-            <Button variant="outline" className="w-full">
-              🗂️ รายงานย้อนหลัง / เอกสารทั้งหมด
-            </Button>
-          </Link>
-          <p className="mt-2 text-[0.65rem] font-semibold text-rose-500">โซนปิดงวด — ทำครั้งเดียวต่อเดือน</p>
-          <Button variant="danger" onClick={() => setDialog("report-close")}>
-            🔒 ปิดงวด + จัดสรรกำไร
-          </Button>
-        </div>
-      </Card>
-
       <DebtorsDialog open={dialog === "debtors"} onOpenChange={(o) => setDialog(o ? "debtors" : null)} />
       <TransferDialog open={dialog === "transfer"} onOpenChange={(o) => setDialog(o ? "transfer" : null)} />
       <VoidDialog open={dialog === "void"} onOpenChange={(o) => setDialog(o ? "void" : null)} />
-      <ReportDialog
-        mode="view"
-        open={dialog === "report-view"}
-        onOpenChange={(o) => setDialog(o ? "report-view" : null)}
-      />
-      <ReportDialog
-        mode="close"
-        open={dialog === "report-close"}
-        onOpenChange={(o) => setDialog(o ? "report-close" : null)}
-      />
     </main>
   );
 }
