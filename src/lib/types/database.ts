@@ -168,6 +168,7 @@ export interface MonthlyReport {
 }
 
 export interface ReportPdfVersion {
+  id: string;
   storage_path: string;
   file_name: string;
   created_at: string;
@@ -514,6 +515,10 @@ export interface Database {
       record_stock_take: {
         Args: { p_items: { product_id: string; counted_stock: number }[] };
         Returns: SaveTransactionResult & { adjusted?: number; unchanged?: number };
+      };
+      delete_report: {
+        Args: { p_id: string };
+        Returns: SaveTransactionResult & { storage_path?: string };
       };
       update_transaction: {
         Args: {
