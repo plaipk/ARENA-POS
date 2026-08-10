@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ProductFormDialog } from "@/components/products/product-form-dialog";
+import { StockTakeDialog } from "@/components/products/stock-take-dialog";
 import { formatMoney } from "@/lib/utils";
 import type { Product } from "@/lib/types/database";
 
@@ -17,6 +18,7 @@ export default function ProductsPage() {
   const invalidate = useInvalidatePosData();
   const [editing, setEditing] = useState<Product | null | undefined>(undefined);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [stockTakeOpen, setStockTakeOpen] = useState(false);
 
   async function handleDelete(p: Product) {
     if (!confirm(`ยืนยันลบสินค้า "${p.name}"?`)) return;
@@ -36,9 +38,10 @@ export default function ProductsPage() {
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-3 p-3 pb-8">
       <div className="flex items-center gap-2">
         <h1 className="text-lg font-bold text-slate-800">📦 จัดการสินค้า</h1>
-        <Button className="ml-auto" onClick={() => setEditing(null)}>
-          + เพิ่มสินค้า
+        <Button variant="outline" className="ml-auto" onClick={() => setStockTakeOpen(true)}>
+          🔢 นับสต็อก
         </Button>
+        <Button onClick={() => setEditing(null)}>+ เพิ่มสินค้า</Button>
       </div>
 
       <Card>
@@ -97,6 +100,12 @@ export default function ProductsPage() {
         open={editing !== undefined}
         onOpenChange={(o) => !o && setEditing(undefined)}
         product={editing ?? null}
+        onSaved={invalidate}
+      />
+      <StockTakeDialog
+        open={stockTakeOpen}
+        onOpenChange={setStockTakeOpen}
+        products={products}
         onSaved={invalidate}
       />
     </main>
