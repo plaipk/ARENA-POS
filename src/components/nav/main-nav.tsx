@@ -7,9 +7,9 @@ import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/", label: "ขาย", icon: Store },
-  { href: "/products", label: "สินค้า", icon: Package },
-  { href: "/statement", label: "สเตทเมนต์", icon: NotebookText },
   { href: "/documents", label: "เอกสาร", icon: FileText },
+  { href: "/statement", label: "สเตทเมนต์", icon: NotebookText },
+  { href: "/products", label: "สินค้า", icon: Package },
 ] as const;
 
 /** Shared responsive nav for all 4 pages — a pill topbar on desktop, a fixed
