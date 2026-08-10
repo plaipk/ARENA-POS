@@ -32,12 +32,19 @@ export function SellForm({
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [qty, setQty] = useState("1");
-  const [isOther, setIsOther] = useState(false);
+  const [cost, setCost] = useState("");
   const nameRef = useRef<HTMLInputElement>(null);
+
+  // Income mode only: typing a name that isn't a real product reveals the
+  // "ต้นทุน" field instead of blocking the line — e.g. "ยอดยกมา" (set
+  // cost = price for zero profit) or an ad-hoc "ค่าเช่าสนาม" (cost = 0).
+  const trimmedName = name.trim();
+  const matchedProduct = products.find((p) => p.name.toLowerCase() === trimmedName.toLowerCase());
+  const needsCost = mode === "income" && trimmedName !== "" && !matchedProduct;
 
   function handleNameInput(value: string) {
     setName(value);
-    if (mode !== "income" || isOther) return;
+    if (mode !== "income") return;
     const match = products.find((p) => p.name.toLowerCase() === value.trim().toLowerCase());
     if (match) setPrice(String(match.price));
   }
@@ -46,7 +53,7 @@ export function SellForm({
     setName("");
     setPrice("");
     setQty("1");
-    setIsOther(false);
+    setCost("");
     nameRef.current?.focus();
   }
 
@@ -63,38 +70,27 @@ export function SellForm({
       toast.error("จำนวนต้องมากกว่า 0");
       return;
     }
+    if (needsCost && (cost.trim() === "" || parseFloat(cost) < 0)) {
+      toast.error(`"${n}" ไม่ใช่สินค้าในระบบ กรุณาใส่ต้นทุนก่อน (ถ้าไม่มีต้นทุนจริง ใส่ 0)`);
+      return;
+    }
 
-    onAdd({ name: n, price: p, qty: q, total: p * q, is_other: mode === "income" && isOther });
+    onAdd({ name: n, price: p, qty: q, total: p * q, cost: needsCost ? parseFloat(cost) || 0 : undefined });
     reset();
   }
 
   return (
     <div>
-      {mode === "income" && (
-        <label className="mb-2 flex items-center gap-1.5 text-xs text-slate-500">
-          <input
-            type="checkbox"
-            checked={isOther}
-            onChange={(e) => {
-              setIsOther(e.target.checked);
-              setPrice("");
-            }}
-            className="h-3.5 w-3.5"
-          />
-          รายการอื่นๆ (ไม่ใช่สินค้า เช่น ยอดยกมา, เงินบริจาค, ค่าปรับ)
-        </label>
-      )}
       <div className="grid grid-cols-2 gap-2">
         <div className="col-span-2">
           <Label htmlFor="itemInput">รายการ</Label>
           <Input
             id="itemInput"
             ref={nameRef}
-            list={isOther ? undefined : "productOptions"}
+            list="productOptions"
             value={name}
             onChange={(e) => handleNameInput(e.target.value)}
             autoComplete="off"
-            placeholder={isOther ? "เช่น ยอดยกมา" : undefined}
           />
           <datalist id="productOptions">
             {products.map((p) => (
@@ -115,6 +111,14 @@ export function SellForm({
           <Label>จำนวน</Label>
           <Input type="number" inputMode="numeric" value={qty} onChange={(e) => setQty(e.target.value)} />
         </div>
+        {needsCost && (
+          <div className="col-span-2">
+            <Label className="text-amber-600">
+              ไม่พบ &quot;{trimmedName}&quot; ในระบบสินค้า — ใส่ต้นทุน (0 ถ้าไม่มีต้นทุน, เท่ากับราคาขายถ้าไม่ต้องการนับเป็นกำไร)
+            </Label>
+            <Input type="number" inputMode="decimal" value={cost} onChange={(e) => setCost(e.target.value)} />
+          </div>
+        )}
       </div>
       <Button type="button" onClick={handleAdd} className={cn("mt-2 w-full", MODE_BUTTON_CLASS[mode])}>
         + เพิ่มรายการ
