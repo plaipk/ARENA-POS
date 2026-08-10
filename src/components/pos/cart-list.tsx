@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import { formatMoney } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import type { CartLine } from "@/lib/types/database";
 
 export function CartList({
@@ -24,6 +25,7 @@ export function CartList({
         >
           <div className="text-sm">
             <b>{item.name}</b>
+            {item.is_other && <Badge className="ml-1">อื่นๆ</Badge>}
             <br />
             <span className="text-xs text-slate-400">
               {formatMoney(item.price)} x {item.qty}

@@ -32,11 +32,12 @@ export function SellForm({
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [qty, setQty] = useState("1");
+  const [isOther, setIsOther] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
 
   function handleNameInput(value: string) {
     setName(value);
-    if (mode !== "income") return;
+    if (mode !== "income" || isOther) return;
     const match = products.find((p) => p.name.toLowerCase() === value.trim().toLowerCase());
     if (match) setPrice(String(match.price));
   }
@@ -45,6 +46,7 @@ export function SellForm({
     setName("");
     setPrice("");
     setQty("1");
+    setIsOther(false);
     nameRef.current?.focus();
   }
 
@@ -62,22 +64,37 @@ export function SellForm({
       return;
     }
 
-    onAdd({ name: n, price: p, qty: q, total: p * q });
+    onAdd({ name: n, price: p, qty: q, total: p * q, is_other: mode === "income" && isOther });
     reset();
   }
 
   return (
     <div>
+      {mode === "income" && (
+        <label className="mb-2 flex items-center gap-1.5 text-xs text-slate-500">
+          <input
+            type="checkbox"
+            checked={isOther}
+            onChange={(e) => {
+              setIsOther(e.target.checked);
+              setPrice("");
+            }}
+            className="h-3.5 w-3.5"
+          />
+          รายการอื่นๆ (ไม่ใช่สินค้า เช่น ยอดยกมา, เงินบริจาค, ค่าปรับ)
+        </label>
+      )}
       <div className="grid grid-cols-2 gap-2">
         <div className="col-span-2">
           <Label htmlFor="itemInput">รายการ</Label>
           <Input
             id="itemInput"
             ref={nameRef}
-            list="productOptions"
+            list={isOther ? undefined : "productOptions"}
             value={name}
             onChange={(e) => handleNameInput(e.target.value)}
             autoComplete="off"
+            placeholder={isOther ? "เช่น ยอดยกมา" : undefined}
           />
           <datalist id="productOptions">
             {products.map((p) => (

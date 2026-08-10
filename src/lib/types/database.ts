@@ -14,7 +14,8 @@ export type TransactionCategory =
   | "stock_purchase"
   | "debt_settlement"
   | "transfer"
-  | "profit_allocation";
+  | "profit_allocation"
+  | "other_income";
 export type TransactionMode = "income" | "expense" | "stock_in" | "settlement" | "transfer" | "allocation";
 export type DebtStatus = "outstanding" | "partial" | "paid" | "void";
 
@@ -121,12 +122,15 @@ export interface AuditLogEntry {
   created_at: string;
 }
 
-/** Cart line sent to save_transaction(); mirrors the old client-side `cart` array. */
+/** Cart line sent to save_transaction(); mirrors the old client-side `cart` array.
+ * `is_other`: free-text income line not tied to any product (e.g. "ยอดยกมา") —
+ * only meaningful in income mode; snake_case because it's sent to the RPC as-is. */
 export interface CartLine {
   name: string;
   qty: number;
   price: number;
   total: number;
+  is_other?: boolean;
 }
 
 export interface SaveTransactionResult {
@@ -250,7 +254,8 @@ export interface Database {
             | "stock_purchase"
             | "debt_settlement"
             | "transfer"
-            | "profit_allocation";
+            | "profit_allocation"
+            | "other_income";
           mode: "income" | "expense" | "stock_in" | "settlement" | "transfer" | "allocation";
           is_void: boolean;
           void_reason: string | null;
@@ -277,7 +282,8 @@ export interface Database {
             | "stock_purchase"
             | "debt_settlement"
             | "transfer"
-            | "profit_allocation";
+            | "profit_allocation"
+            | "other_income";
           mode: "income" | "expense" | "stock_in" | "settlement" | "transfer" | "allocation";
           is_void?: boolean;
           void_reason?: string | null;
