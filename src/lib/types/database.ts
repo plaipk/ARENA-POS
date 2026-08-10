@@ -167,6 +167,12 @@ export interface MonthlyReport {
   alloc: AllocationBreakdown;
 }
 
+export interface ReportPdfVersion {
+  storage_path: string;
+  file_name: string;
+  created_at: string;
+}
+
 export interface ArchiveMonth extends MonthlyReport {
   month: number;
   month_name: string;
@@ -176,6 +182,9 @@ export interface ArchiveMonth extends MonthlyReport {
   has_pdf: boolean;
   storage_path: string | null;
   pdf_created_at: string | null;
+  /** Every PDF ever generated for this month, newest first — regenerating
+   * doesn't discard earlier ones, so any version can be reopened. */
+  pdf_versions: ReportPdfVersion[];
 }
 
 /** Search result row returned by search_transactions_by_date() — powers the Void dialog. */
