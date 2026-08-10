@@ -97,6 +97,13 @@ export default function DocumentsPage() {
             <Label>ค้นหา (ชื่อเดือน / รอบวันที่)</Label>
             <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="พิมพ์เพื่อค้นหา..." />
           </div>
+          <Button
+            variant="outline"
+            className="border-slate-800 bg-slate-900 text-white hover:bg-slate-800"
+            onClick={() => setReportDialog("view")}
+          >
+            📄 ดูรายงานเดือนนี้ (รายละเอียด)
+          </Button>
         </div>
       </Card>
 
@@ -192,22 +199,17 @@ export default function DocumentsPage() {
         )}
       </Card>
 
-      <Card className="border border-rose-100 bg-rose-50/40">
-        <p className="mb-2 text-[0.65rem] font-semibold uppercase tracking-wide text-rose-500">
-          โซนปิดงวด — ทำครั้งเดียวต่อเดือน
+      <Card className="border-2 border-rose-200 bg-rose-50/40">
+        <p className="mb-1 text-[0.65rem] font-semibold uppercase tracking-wide text-rose-500">
+          โซนปิดงวด — ทำครั้งเดียวต่อเดือน เปลี่ยนกลับไม่ได้
         </p>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <Button
-            variant="outline"
-            className="w-full border-slate-800 bg-slate-900 text-white hover:bg-slate-800"
-            onClick={() => setReportDialog("view")}
-          >
-            📄 ดูรายงานเดือนนี้ (รายละเอียด)
-          </Button>
-          <Button variant="danger" onClick={() => setReportDialog("close")}>
-            🔒 ปิดงวด + จัดสรรกำไร
-          </Button>
-        </div>
+        <p className="mb-2 text-xs text-slate-500">
+          กดปุ่มนี้ก็ต่อเมื่อจะจัดสรรกำไรของรอบบัญชีจริงๆ — ถ้าแค่อยากดูตัวเลข ใช้ปุ่ม
+          &quot;ดูรายงานเดือนนี้&quot; ด้านบนแทน ปลอดภัยกว่า
+        </p>
+        <Button variant="danger" className="w-full" onClick={() => setReportDialog("close")}>
+          🔒 ปิดงวด + จัดสรรกำไร
+        </Button>
       </Card>
 
       <BottomSheet open={!!sheetMonth} onOpenChange={(o) => !o && setSheetMonth(null)}>
