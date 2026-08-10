@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 import type { Product, CartLine, TransactionMode } from "@/lib/types/database";
 
 const MODE_PRICE_LABEL: Record<string, string> = {
@@ -13,10 +14,10 @@ const MODE_PRICE_LABEL: Record<string, string> = {
   stock_in: "ทุนรวม/หน่วย",
 };
 
-const MODE_BUTTON_COLOR: Record<string, string> = {
-  income: "#06d6a0",
-  expense: "#ef476f",
-  stock_in: "#ffd166",
+const MODE_BUTTON_CLASS: Record<string, string> = {
+  income: "bg-emerald-500 hover:bg-emerald-600 text-white",
+  expense: "bg-rose-500 hover:bg-rose-600 text-white",
+  stock_in: "bg-amber-400 hover:bg-amber-500 text-black",
 };
 
 export function SellForm({
@@ -98,12 +99,7 @@ export function SellForm({
           <Input type="number" inputMode="numeric" value={qty} onChange={(e) => setQty(e.target.value)} />
         </div>
       </div>
-      <Button
-        type="button"
-        onClick={handleAdd}
-        className="mt-2 w-full text-white"
-        style={{ background: MODE_BUTTON_COLOR[mode] }}
-      >
+      <Button type="button" onClick={handleAdd} className={cn("mt-2 w-full", MODE_BUTTON_CLASS[mode])}>
         + เพิ่มรายการ
       </Button>
     </div>
