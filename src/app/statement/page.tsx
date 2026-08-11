@@ -136,7 +136,10 @@ export default function StatementPage() {
           paymentLabel: t.payment_method === "cash" ? "เงินสด" : "โอน",
           dim: t.is_void,
           statusBadge: t.is_void ? { label: "ยกเลิกแล้ว", variant: "danger" } : null,
-          canEdit: !t.is_void,
+          // รับชำระหนี้ แก้ไขไม่ได้ — void_transaction พาร์สชื่อลูกหนี้จากช่อง
+          // detail ตอนคืนยอดเป็นหนี้ใหม่ (`รับชำระหนี้: ชื่อ`) ถ้าไปแก้ข้อความ
+          // นี้ก่อน void ชื่อที่คืนมาจะไม่ตรงคนเดิม จึงเหลือแค่ยกเลิกได้อย่างเดียว
+          canEdit: !t.is_void && t.category !== "debt_settlement",
           canVoid: !t.is_void,
           transaction: t,
           debt: null,
