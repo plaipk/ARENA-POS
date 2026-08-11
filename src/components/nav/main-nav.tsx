@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Store, Package, NotebookText, FileText } from "lucide-react";
+import { Store, Package, NotebookText, FileText, PiggyBank } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: "/documents", label: "เอกสาร", icon: FileText },
   { href: "/statement", label: "สเตทเมนต์", icon: NotebookText },
   { href: "/products", label: "สินค้า", icon: Package },
+  { href: "/reserve-fund", label: "เงินสำรอง", icon: PiggyBank },
 ] as const;
 
 /** Shared responsive nav for all 4 pages — a pill topbar on desktop, a fixed

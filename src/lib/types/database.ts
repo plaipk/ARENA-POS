@@ -85,6 +85,7 @@ export interface ReserveFundEntry {
   period: string;
   amount: number;
   allocation_id: string | null;
+  note: string | null;
   created_at: string;
 }
 
@@ -376,8 +377,22 @@ export interface Database {
         Relationships: [];
       };
       reserve_fund_entries: {
-        Row: { id: string; period: string; amount: number; allocation_id: string | null; created_at: string };
-        Insert: { id?: string; period: string; amount: number; allocation_id?: string | null; created_at?: string };
+        Row: {
+          id: string;
+          period: string;
+          amount: number;
+          allocation_id: string | null;
+          note: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          period: string;
+          amount: number;
+          allocation_id?: string | null;
+          note?: string | null;
+          created_at?: string;
+        };
         Update: { id?: string };
         Relationships: [];
       };
@@ -515,6 +530,10 @@ export interface Database {
       record_stock_take: {
         Args: { p_items: { product_id: string; counted_stock: number }[] };
         Returns: SaveTransactionResult & { adjusted?: number; unchanged?: number };
+      };
+      add_reserve_fund_entry: {
+        Args: { p_period: string; p_amount: number; p_note: string | null };
+        Returns: SaveTransactionResult & { id?: string };
       };
       delete_report: {
         Args: { p_id: string };
