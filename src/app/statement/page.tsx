@@ -205,16 +205,18 @@ export default function StatementPage() {
       </div>
 
       <Card>
-        <div className="flex flex-wrap items-end gap-2">
-          <div>
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-end">
+          <div className="sm:w-auto">
             <Label>จากวันที่</Label>
             <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
           </div>
-          <div>
+          <div className="sm:w-auto">
             <Label>ถึงวันที่</Label>
             <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
           </div>
-          <Button onClick={() => refetch()}>ค้นหา</Button>
+          <Button onClick={() => refetch()} className="col-span-2 sm:col-span-1">
+            ค้นหา
+          </Button>
         </div>
       </Card>
 
