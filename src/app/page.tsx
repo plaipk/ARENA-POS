@@ -13,7 +13,6 @@ import { CartList } from "@/components/pos/cart-list";
 import { PaymentSection, type PayType } from "@/components/pos/payment-section";
 import { DebtorsDialog } from "@/components/modals/debtors-dialog";
 import { TransferDialog } from "@/components/modals/transfer-dialog";
-import { VoidDialog } from "@/components/modals/void-dialog";
 import type { CartLine, TransactionMode } from "@/lib/types/database";
 
 const PAY_TYPE_TO_DB: Record<PayType, string> = {
@@ -29,7 +28,7 @@ export default function PosPage() {
   const [customerName, setCustomerName] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const [dialog, setDialog] = useState<null | "debtors" | "transfer" | "void">(null);
+  const [dialog, setDialog] = useState<null | "debtors" | "transfer">(null);
 
   const { data: products = [] } = useProducts();
   const { data: debtorNames = [] } = useDebtorNames();
@@ -109,9 +108,6 @@ export default function PosPage() {
           <Button variant="outline" size="sm" onClick={() => setDialog("transfer")}>
             🔄 โยกเงิน (เงินสด ↔ เงินโอน)
           </Button>
-          <Button variant="outlineDanger" size="sm" onClick={() => setDialog("void")}>
-            🔍 ค้นหาและยกเลิกรายการ (Void)
-          </Button>
           <Button variant="outline" size="sm" onClick={() => setDialog("debtors")}>
             👥 ดูยอดหนี้ค้างชำระ
           </Button>
@@ -120,7 +116,6 @@ export default function PosPage() {
 
       <DebtorsDialog open={dialog === "debtors"} onOpenChange={(o) => setDialog(o ? "debtors" : null)} />
       <TransferDialog open={dialog === "transfer"} onOpenChange={(o) => setDialog(o ? "transfer" : null)} />
-      <VoidDialog open={dialog === "void"} onOpenChange={(o) => setDialog(o ? "void" : null)} />
     </main>
   );
 }
