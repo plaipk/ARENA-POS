@@ -206,13 +206,35 @@ export default function StatementPage() {
 
       <Card>
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
-          <div className="sm:w-auto">
-            <Label>จากวันที่</Label>
-            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-          </div>
-          <div className="sm:w-auto">
-            <Label>ถึงวันที่</Label>
-            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+          {/* Both date fields share one row even on a narrow phone. The fix
+             that actually matters here: flex/grid items default to
+             min-width:auto, which lets a child refuse to shrink below its
+             *content's* natural size — for a native <input type="date">
+             showing a full localized string ("12 ก.ค. 2569"), that natural
+             size can exceed its allotted half of the row, so it spills past
+             its own box into the neighbor's regardless of w-full/flex-basis.
+             min-w-0 overrides that, forcing it to actually respect the
+             shrink; overflow-hidden is a second line of defense so if the
+             native widget still wants more room, it clips instead of spilling. */}
+          <div className="flex min-w-0 flex-1 gap-2 sm:contents">
+            <div className="min-w-0 flex-1 overflow-hidden sm:w-auto sm:flex-none">
+              <Label>จากวันที่</Label>
+              <Input
+                type="date"
+                className="w-full min-w-0 px-2 text-xs sm:px-3 sm:text-sm"
+                value={from}
+                onChange={(e) => setFrom(e.target.value)}
+              />
+            </div>
+            <div className="min-w-0 flex-1 overflow-hidden sm:w-auto sm:flex-none">
+              <Label>ถึงวันที่</Label>
+              <Input
+                type="date"
+                className="w-full min-w-0 px-2 text-xs sm:px-3 sm:text-sm"
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+              />
+            </div>
           </div>
           <Button onClick={() => refetch()} className="w-full sm:w-auto">
             ค้นหา
