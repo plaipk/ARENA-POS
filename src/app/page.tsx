@@ -111,9 +111,6 @@ export default function PosPage() {
       <Card>
         <p className="mb-2 text-[0.65rem] font-semibold uppercase tracking-wide text-slate-400">เมนูอื่นๆ</p>
         <div className="grid grid-cols-1 gap-2">
-          <Button variant="outline" size="sm" onClick={() => setDialog("transfer")}>
-            🔄 โยกเงิน (เงินสด ↔ เงินโอน)
-          </Button>
           <Button variant="outline" size="sm" onClick={() => setDialog("debtors")}>
             👥 ดูยอดหนี้ค้างชำระ
           </Button>
