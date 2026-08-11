@@ -32,6 +32,13 @@ export default function ProductsPage() {
     return q ? allProducts.filter((p) => p.name.toLowerCase().includes(q)) : allProducts;
   }, [allProducts, search]);
 
+  // มูลค่าสต็อกรวม = สต็อกคงเหลือ x ต้นทุนต่อหน่วย ของทุกสินค้า (ตัวเลขเดียวกับ
+  // ที่รายงานประจำเดือนใช้เป็น "มูลค่าสินค้าคงเหลือ") — ไม่ผูกกับตัวกรองค้นหา
+  const totalStockValue = useMemo(
+    () => allProducts.reduce((sum, p) => sum + p.stock * p.cost, 0),
+    [allProducts],
+  );
+
   async function handleDelete(p: Product) {
     if (!confirm(`ยืนยันลบสินค้า "${p.name}"?`)) return;
     setSheetProduct(null);
@@ -61,6 +68,11 @@ export default function ProductsPage() {
           + เพิ่มสินค้า
         </Button>
       </div>
+
+      <Card className="flex items-center justify-between bg-slate-900 text-white">
+        <span className="text-xs text-slate-300">มูลค่าสต็อกรวม (สต็อก x ต้นทุน)</span>
+        <span className="text-lg font-bold">{formatMoney(totalStockValue)} บาท</span>
+      </Card>
 
       <Card>
         <Label>ค้นหาสินค้า</Label>
