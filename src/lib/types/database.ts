@@ -123,6 +123,19 @@ export interface AuditLogEntry {
   created_at: string;
 }
 
+/** One product's result within a stock-take run (see record_stock_take()) —
+ * a pure count/report, never adjusts `products.stock` itself. */
+export interface StockTakeItem {
+  id: string;
+  session_id: string;
+  product_id: string | null;
+  product_name: string;
+  system_stock: number;
+  counted_stock: number;
+  diff: number;
+  created_at: string;
+}
+
 /** Cart line sent to save_transaction(); mirrors the old client-side `cart` array.
  * `cost`: cost per unit, only sent (and only required) when `name` doesn't match
  * any real product in income mode — e.g. "ยอดยกมา" (cost = price -> zero profit)
@@ -470,6 +483,30 @@ export interface Database {
         Update: { id?: string };
         Relationships: [];
       };
+      stock_take_items: {
+        Row: {
+          id: string;
+          session_id: string;
+          product_id: string | null;
+          product_name: string;
+          system_stock: number;
+          counted_stock: number;
+          diff: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          session_id: string;
+          product_id?: string | null;
+          product_name: string;
+          system_stock: number;
+          counted_stock: number;
+          diff: number;
+          created_at?: string;
+        };
+        Update: { id?: string };
+        Relationships: [];
+      };
     };
     Views: {
       v_balance_summary: { Row: { cash: number; transfer: number }; Relationships: [] };
@@ -529,7 +566,7 @@ export interface Database {
       };
       record_stock_take: {
         Args: { p_items: { product_id: string; counted_stock: number }[] };
-        Returns: SaveTransactionResult & { adjusted?: number; unchanged?: number };
+        Returns: SaveTransactionResult & { session_id?: string; over?: number; short?: number; match?: number };
       };
       add_reserve_fund_entry: {
         Args: { p_period: string; p_amount: number; p_note: string | null };

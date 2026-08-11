@@ -9,9 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import type { Product } from "@/lib/types/database";
 
-/** Physical stock count: staff types what's actually on the shelf per product,
- * the system snaps `stock` to match and logs every adjustment (old -> new,
- * delta) to audit_log via record_stock_take(). */
+/** Physical stock count: staff types what's actually on the shelf per
+ * product. This is a count/report only — record_stock_take() never touches
+ * `products.stock`; every item (matched or not) is logged for the history
+ * page to show, and correcting the system's number (if needed) is a
+ * separate, deliberate step via "แก้ไข" on the product itself. */
 export function StockTakeDialog({
   open,
   onOpenChange,
@@ -69,8 +71,8 @@ export function StockTakeDialog({
           <DialogTitle>🔢 นับสต็อกจริง</DialogTitle>
         </DialogHeader>
         <p className="text-xs text-slate-500">
-          กรอกจำนวนที่นับได้จริงบนชั้น/สต็อกของแต่ละสินค้า ระบบจะปรับยอดสต็อกให้ตรงและบันทึกส่วนต่างไว้ในประวัติ
-          (Audit Log) อัตโนมัติ — ปล่อยว่างไว้ถ้ายังไม่ได้นับรายการนั้น
+          กรอกจำนวนที่นับได้จริงบนชั้นของแต่ละสินค้า ระบบจะ<b>บันทึกไว้เทียบดูเฉยๆ ไม่ปรับยอดสต็อกในระบบให้</b>
+          — ดูผลเกิน/ขาดทั้งหมดได้ที่ &quot;ประวัตินับสต็อก&quot; ทีหลัง ปล่อยว่างไว้ถ้ายังไม่ได้นับรายการนั้น
         </p>
 
         <div className="max-h-96 space-y-1.5 overflow-y-auto">
