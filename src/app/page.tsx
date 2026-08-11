@@ -29,6 +29,7 @@ export default function PosPage() {
   const [saving, setSaving] = useState(false);
 
   const [dialog, setDialog] = useState<null | "debtors" | "transfer">(null);
+  const [transferDirection, setTransferDirection] = useState<"cash_to_bank" | "bank_to_cash">("cash_to_bank");
 
   const { data: products = [] } = useProducts();
   const { data: debtorNames = [] } = useDebtorNames();
@@ -79,7 +80,12 @@ export default function PosPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-3 p-3 pb-8">
-      <BalanceHeader />
+      <BalanceHeader
+        onTransferRequest={(direction) => {
+          setTransferDirection(direction);
+          setDialog("transfer");
+        }}
+      />
 
       <Card>
         <p className="mb-2 text-[0.65rem] font-semibold uppercase tracking-wide text-slate-400">ขายสินค้า</p>
@@ -115,7 +121,11 @@ export default function PosPage() {
       </Card>
 
       <DebtorsDialog open={dialog === "debtors"} onOpenChange={(o) => setDialog(o ? "debtors" : null)} />
-      <TransferDialog open={dialog === "transfer"} onOpenChange={(o) => setDialog(o ? "transfer" : null)} />
+      <TransferDialog
+        open={dialog === "transfer"}
+        onOpenChange={(o) => setDialog(o ? "transfer" : null)}
+        initialDirection={transferDirection}
+      />
     </main>
   );
 }
