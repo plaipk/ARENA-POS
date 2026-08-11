@@ -196,7 +196,7 @@ export default function StatementPage() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-3 p-3 pb-8">
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-3 p-3 pb-8">
       <div className="flex items-center gap-2">
         <h1 className="text-lg font-bold text-slate-800">📑 สเตทเมนต์ (รายการทั้งหมด)</h1>
       </div>
