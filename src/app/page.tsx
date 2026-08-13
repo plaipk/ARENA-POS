@@ -24,7 +24,7 @@ const PAY_TYPE_TO_DB: Record<PayType, string> = {
 export default function PosPage() {
   const [mode, setMode] = useState<TransactionMode>("income");
   const [cart, setCart] = useState<CartLine[]>([]);
-  const [payType, setPayType] = useState<PayType>("cash");
+  const [payType, setPayType] = useState<PayType>("transfer");
   const [customerName, setCustomerName] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -40,7 +40,7 @@ export default function PosPage() {
   function handleModeChange(next: "income" | "expense" | "stock_in") {
     setMode(next);
     setCart([]);
-    if (next !== "income" && payType === "credit") setPayType("cash");
+    if (next !== "income" && payType === "credit") setPayType("transfer");
   }
 
   async function handleSubmit() {
