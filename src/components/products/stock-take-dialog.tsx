@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -27,6 +27,7 @@ export function StockTakeDialog({
 }) {
   const [counts, setCounts] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
 
   // Re-seed every field from the current stock the moment the dialog opens.
   // Runs during render — onOpenChange never fires when the parent flips
@@ -37,8 +38,17 @@ export function StockTakeDialog({
     setPrevOpen(open);
     if (open) {
       setCounts(Object.fromEntries(products.map((p) => [p.id, String(p.stock)])));
+      setSearch("");
     }
   }
+
+  // Filters what's *shown* only — counts are tracked (and saved) for every
+  // product regardless of the search box, so switching the query around
+  // never drops a count someone already typed for a now-hidden row.
+  const visibleProducts = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return q ? products.filter((p) => p.name.toLowerCase().includes(q)) : products;
+  }, [products, search]);
 
   async function handleSave() {
     const items = products
@@ -75,8 +85,17 @@ export function StockTakeDialog({
           — ดูผลเกิน/ขาดทั้งหมดได้ที่ &quot;ประวัตินับสต็อก&quot; ทีหลัง ปล่อยว่างไว้ถ้ายังไม่ได้นับรายการนั้น
         </p>
 
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="ค้นหาสินค้า..."
+        />
+
         <div className="max-h-96 space-y-1.5 overflow-y-auto">
-          {products.map((p) => (
+          {!visibleProducts.length && (
+            <p className="py-6 text-center text-sm text-slate-400">ไม่พบสินค้าที่ค้นหา</p>
+          )}
+          {visibleProducts.map((p) => (
             <div key={p.id} className="flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50/60 p-2">
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium text-slate-800">{p.name}</div>

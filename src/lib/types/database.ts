@@ -568,6 +568,10 @@ export interface Database {
         Args: { p_items: { product_id: string; counted_stock: number }[] };
         Returns: SaveTransactionResult & { session_id?: string; over?: number; short?: number; match?: number };
       };
+      delete_stock_take_session: {
+        Args: { p_session_id: string };
+        Returns: SaveTransactionResult;
+      };
       add_reserve_fund_entry: {
         Args: { p_period: string; p_amount: number; p_note: string | null };
         Returns: SaveTransactionResult & { id?: string };
