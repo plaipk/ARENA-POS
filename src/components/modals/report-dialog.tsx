@@ -9,6 +9,7 @@ import { downloadGeneratedPdf } from "@/lib/download-report";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ReportPreview } from "@/components/documents/report-preview";
 import { formatMoney } from "@/lib/utils";
 import { MONTH_NAMES_TH } from "@/lib/period";
 import type { MonthlyReport } from "@/lib/types/database";
@@ -53,25 +54,22 @@ export function ReportDialog({
   const isClose = mode === "close";
   const canClose = isClose && report && report.alloc.net_profit > 0;
 
-  async function handleConfirm() {
-    if (isClose) {
-      if (!confirm("ยืนยันการบันทึกยอดจัดสรรลงบัญชี?\n(รอบนี้จะถูกปิดงวดถาวร)")) return;
-      setBusy(true);
-      const supabase = createClient();
-      const { data: allocRes, error } = await supabase.rpc("save_allocation_entry", {
-        p_month: month,
-        p_year: year,
-      });
-      if (error || !allocRes?.ok) {
-        setBusy(false);
-        toast.error("บันทึกจัดสรรไม่สำเร็จ: " + (error?.message ?? allocRes?.message));
-        return;
-      }
-      if (allocRes.message) toast.info(allocRes.message);
-      invalidate();
-    }
-
+  // Only reachable in close mode (view mode renders no confirming button —
+  // it's just a live preview, nothing to confirm). Saves the allocation
+  // permanently, then generates the actual archived PDF for the period.
+  async function handleConfirmClose() {
+    if (!confirm("ยืนยันการบันทึกยอดจัดสรรลงบัญชี?\n(รอบนี้จะถูกปิดงวดถาวร)")) return;
     setBusy(true);
+    const supabase = createClient();
+    const { data: allocRes, error } = await supabase.rpc("save_allocation_entry", { p_month: month, p_year: year });
+    if (error || !allocRes?.ok) {
+      setBusy(false);
+      toast.error("บันทึกจัดสรรไม่สำเร็จ: " + (error?.message ?? allocRes?.message));
+      return;
+    }
+    if (allocRes.message) toast.info(allocRes.message);
+    invalidate();
+
     try {
       const res = await downloadGeneratedPdf(month, year);
       setDone(res);
@@ -86,9 +84,9 @@ export function ReportDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className={isClose ? undefined : "max-w-2xl"}>
         <DialogHeader>
-          <DialogTitle>{isClose ? "🔒 ปิดงวด + จัดสรรกำไร" : "📄 รายงาน (ดูอย่างเดียว)"}</DialogTitle>
+          <DialogTitle>{isClose ? "🔒 ปิดงวด + จัดสรรกำไร" : "📄 รายงานเดือนนี้ (ยังไม่ปิดยอด)"}</DialogTitle>
         </DialogHeader>
 
         <div className="flex gap-2">
@@ -120,7 +118,12 @@ export function ReportDialog({
 
         {isLoading && <p className="py-6 text-center text-sm text-slate-400">กำลังประมวลผล...</p>}
 
-        {report && (
+        {/* View mode: full preview styled like the actual PDF, watermarked —
+           this is a live snapshot, not the archived record. Nothing to
+           confirm here, so no action button below. */}
+        {report && !isClose && <ReportPreview report={report} month={month} year={year} />}
+
+        {report && isClose && (
           <div className="text-center text-sm">
             <h4 className="text-slate-400">รอบวันที่: {report.period}</h4>
             <div className="my-3 grid grid-cols-2 gap-2">
@@ -136,7 +139,9 @@ export function ReportDialog({
               </div>
             </div>
 
-            <div className={`mb-3 rounded-2xl p-3 text-white ${report.alloc.net_profit > 0 ? "bg-emerald-500" : "bg-slate-400"}`}>
+            <div
+              className={`mb-3 rounded-2xl p-3 text-white ${report.alloc.net_profit > 0 ? "bg-emerald-500" : "bg-slate-400"}`}
+            >
               <small>กำไรสุทธิสำหรับจัดสรร (Net Profit)</small>
               <h3 className="m-0 text-2xl font-bold">฿{formatMoney(report.alloc.net_profit)}</h3>
             </div>
@@ -155,20 +160,15 @@ export function ReportDialog({
               </div>
             </div>
 
-            {isClose && !canClose && (
+            {!canClose && (
               <div className="rounded-lg bg-amber-50 p-2 text-xs text-amber-700">
                 กำไรสุทธิไม่เป็นบวก จึงยังปิดงวดไม่ได้
-              </div>
-            )}
-            {!isClose && (
-              <div className="rounded-lg bg-slate-100 p-2 text-[0.7rem] text-slate-500">
-                โหมดดูอย่างเดียว — ตัวเลขจัดสรรด้านบนเป็นการคำนวณให้ดูเฉย ๆ ยังไม่ถูกบันทึกลงบัญชี
               </div>
             )}
           </div>
         )}
 
-        {done && (
+        {isClose && done && (
           <div className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-700">
             สร้าง PDF สำเร็จ: <b>{done.fileName}</b>
             {done.url && (
@@ -181,14 +181,15 @@ export function ReportDialog({
           </div>
         )}
 
-        <Button
-          variant={isClose ? "danger" : "default"}
-          disabled={busy || isLoading || (isClose && !canClose)}
-          onClick={handleConfirm}
-          className="w-full"
-        >
-          {busy ? "กำลังดำเนินการ..." : isClose ? "🔒 ยืนยันปิดงวด + จัดสรร" : "⬇️ ดาวน์โหลด PDF"}
-        </Button>
+        {isClose ? (
+          <Button variant="danger" disabled={busy || isLoading || !canClose} onClick={handleConfirmClose} className="w-full">
+            {busy ? "กำลังดำเนินการ..." : "🔒 ยืนยันปิดงวด + จัดสรร"}
+          </Button>
+        ) : (
+          <Button variant="ghost" onClick={() => onOpenChange(false)} className="w-full">
+            ปิด
+          </Button>
+        )}
       </DialogContent>
     </Dialog>
   );
