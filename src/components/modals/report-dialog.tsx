@@ -10,19 +10,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ReportPreview } from "@/components/documents/report-preview";
-import { formatMoney } from "@/lib/utils";
-import { MONTH_NAMES_TH } from "@/lib/period";
+import { MONTH_NAMES_TH, isPeriodOver } from "@/lib/period";
 import type { MonthlyReport } from "@/lib/types/database";
 
-export function ReportDialog({
-  mode,
-  open,
-  onOpenChange,
-}: {
-  mode: "view" | "close";
-  open: boolean;
-  onOpenChange: (o: boolean) => void;
-}) {
+/** "ดูรายงานเดือนนี้" — a live, PDF-styled preview of any month, with ปิดงวด
+ * folded in as one action at the bottom instead of a separate button/dialog.
+ * ปิดงวด only unlocks once that period's 25th has actually passed — closing
+ * early would lock in numbers for a month that isn't over yet. */
+export function ReportDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const invalidate = useInvalidatePosData();
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -51,13 +46,10 @@ export function ReportDialog({
     },
   });
 
-  const isClose = mode === "close";
-  const canClose = isClose && report && report.alloc.net_profit > 0;
+  const periodOver = isPeriodOver(month, year);
+  const canClose = !!report && report.alloc.net_profit > 0 && periodOver;
 
-  // Only reachable in close mode (view mode renders no confirming button —
-  // it's just a live preview, nothing to confirm). Saves the allocation
-  // permanently, then generates the actual archived PDF for the period.
-  async function handleConfirmClose() {
+  async function handleClosePeriod() {
     if (!confirm("ยืนยันการบันทึกยอดจัดสรรลงบัญชี?\n(รอบนี้จะถูกปิดงวดถาวร)")) return;
     setBusy(true);
     const supabase = createClient();
@@ -84,9 +76,9 @@ export function ReportDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={isClose ? undefined : "max-w-2xl"}>
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{isClose ? "🔒 ปิดงวด + จัดสรรกำไร" : "📄 รายงานเดือนนี้ (ยังไม่ปิดยอด)"}</DialogTitle>
+          <DialogTitle>📄 รายงานเดือนนี้ (ยังไม่ปิดยอด)</DialogTitle>
         </DialogHeader>
 
         <div className="flex gap-2">
@@ -118,57 +110,9 @@ export function ReportDialog({
 
         {isLoading && <p className="py-6 text-center text-sm text-slate-400">กำลังประมวลผล...</p>}
 
-        {/* View mode: full preview styled like the actual PDF, watermarked —
-           this is a live snapshot, not the archived record. Nothing to
-           confirm here, so no action button below. */}
-        {report && !isClose && <ReportPreview report={report} month={month} year={year} />}
+        {report && <ReportPreview report={report} month={month} year={year} />}
 
-        {report && isClose && (
-          <div className="text-center text-sm">
-            <h4 className="text-slate-400">รอบวันที่: {report.period}</h4>
-            <div className="my-3 grid grid-cols-2 gap-2">
-              <div className="rounded-lg border p-2">
-                รายได้รวม
-                <br />
-                <b>฿{formatMoney(report.total_income)}</b>
-              </div>
-              <div className="rounded-lg border p-2">
-                รายจ่ายรวม
-                <br />
-                <b>฿{formatMoney(report.total_expense)}</b>
-              </div>
-            </div>
-
-            <div
-              className={`mb-3 rounded-2xl p-3 text-white ${report.alloc.net_profit > 0 ? "bg-emerald-500" : "bg-slate-400"}`}
-            >
-              <small>กำไรสุทธิสำหรับจัดสรร (Net Profit)</small>
-              <h3 className="m-0 text-2xl font-bold">฿{formatMoney(report.alloc.net_profit)}</h3>
-            </div>
-
-            <div className="mb-2 rounded-2xl border bg-slate-50 p-3 text-left">
-              <small className="mb-1 block font-bold text-indigo-600">การจัดสรรกำไร:</small>
-              <Row label="1. ทุนการศึกษา (30%)" value={report.alloc.scholarship} />
-              <Row label="2. สำรองฉุกเฉิน (30%)" value={report.alloc.emergency} />
-              <Row label="4. ค่าตอบแทน จนท. (10%)" value={report.alloc.staff} bottomBorder />
-              <div className="flex justify-between font-bold text-rose-600">
-                <span>รวมยอดดึงออกจากบัญชี:</span>
-                <span>- ฿{formatMoney(report.alloc.total_out)}</span>
-              </div>
-              <div className="mt-2 border-t pt-2 text-xs text-emerald-600">
-                3. หมุนเวียนสนาม (30% คาไว้ในบัญชี): <b>฿{formatMoney(report.alloc.rotate)}</b>
-              </div>
-            </div>
-
-            {!canClose && (
-              <div className="rounded-lg bg-amber-50 p-2 text-xs text-amber-700">
-                กำไรสุทธิไม่เป็นบวก จึงยังปิดงวดไม่ได้
-              </div>
-            )}
-          </div>
-        )}
-
-        {isClose && done && (
+        {done && (
           <div className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-700">
             สร้าง PDF สำเร็จ: <b>{done.fileName}</b>
             {done.url && (
@@ -181,24 +125,25 @@ export function ReportDialog({
           </div>
         )}
 
-        {isClose ? (
-          <Button variant="danger" disabled={busy || isLoading || !canClose} onClick={handleConfirmClose} className="w-full">
-            {busy ? "กำลังดำเนินการ..." : "🔒 ยืนยันปิดงวด + จัดสรร"}
-          </Button>
-        ) : (
-          <Button variant="ghost" onClick={() => onOpenChange(false)} className="w-full">
-            ปิด
-          </Button>
+        {report && !done && (
+          <div className="rounded-2xl border-2 border-rose-200 bg-rose-50/40 p-3">
+            <p className="mb-1 text-[0.65rem] font-semibold uppercase tracking-wide text-rose-500">
+              โซนปิดงวด — ทำครั้งเดียวต่อเดือน เปลี่ยนกลับไม่ได้
+            </p>
+            {!periodOver && (
+              <p className="mb-2 text-xs text-slate-500">
+                รอบนี้ยังไม่จบ — ปิดงวดได้ตั้งแต่วันที่ 26 {MONTH_NAMES_TH[month]} {year} เป็นต้นไป
+              </p>
+            )}
+            {periodOver && report.alloc.net_profit <= 0 && (
+              <p className="mb-2 text-xs text-amber-600">กำไรสุทธิไม่เป็นบวก จึงยังปิดงวดไม่ได้</p>
+            )}
+            <Button variant="danger" className="w-full" disabled={busy || !canClose} onClick={handleClosePeriod}>
+              {busy ? "กำลังดำเนินการ..." : "🔒 ปิดงวด + จัดสรรกำไร"}
+            </Button>
+          </div>
         )}
       </DialogContent>
     </Dialog>
-  );
-}
-
-function Row({ label, value, bottomBorder }: { label: string; value: number; bottomBorder?: boolean }) {
-  return (
-    <div className={`flex justify-between text-xs ${bottomBorder ? "mb-1 border-b pb-1" : ""}`}>
-      <span>{label}</span> <b>฿{formatMoney(value)}</b>
-    </div>
   );
 }

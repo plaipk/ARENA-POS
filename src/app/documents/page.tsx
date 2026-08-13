@@ -31,7 +31,7 @@ export default function DocumentsPage() {
   const [sheetMonth, setSheetMonth] = useState<ArchiveMonth | null>(null);
   const [pdfListMonth, setPdfListMonth] = useState<ArchiveMonth | null>(null);
   const [busyMonth, setBusyMonth] = useState<number | null>(null);
-  const [reportDialog, setReportDialog] = useState<null | "view" | "close">(null);
+  const [reportOpen, setReportOpen] = useState(false);
 
   const queryClient = useQueryClient();
   const { data: months = [], isLoading } = useReportArchive(year);
@@ -121,7 +121,7 @@ export default function DocumentsPage() {
           <Button
             variant="outline"
             className="border-slate-800 bg-slate-900 text-white hover:bg-slate-800"
-            onClick={() => setReportDialog("view")}
+            onClick={() => setReportOpen(true)}
           >
             📄 ดูรายงานเดือนนี้ (รายละเอียด)
           </Button>
@@ -220,19 +220,6 @@ export default function DocumentsPage() {
         )}
       </Card>
 
-      <Card className="border-2 border-rose-200 bg-rose-50/40">
-        <p className="mb-1 text-[0.65rem] font-semibold uppercase tracking-wide text-rose-500">
-          โซนปิดงวด — ทำครั้งเดียวต่อเดือน เปลี่ยนกลับไม่ได้
-        </p>
-        <p className="mb-2 text-xs text-slate-500">
-          กดปุ่มนี้ก็ต่อเมื่อจะจัดสรรกำไรของรอบบัญชีจริงๆ — ถ้าแค่อยากดูตัวเลข ใช้ปุ่ม
-          &quot;ดูรายงานเดือนนี้&quot; ด้านบนแทน ปลอดภัยกว่า
-        </p>
-        <Button variant="danger" className="w-full" onClick={() => setReportDialog("close")}>
-          🔒 ปิดงวด + จัดสรรกำไร
-        </Button>
-      </Card>
-
       <BottomSheet open={!!sheetMonth} onOpenChange={(o) => !o && setSheetMonth(null)}>
         <BottomSheetContent>
           {sheetMonth && (
@@ -301,16 +288,7 @@ export default function DocumentsPage() {
         </BottomSheetContent>
       </BottomSheet>
 
-      <ReportDialog
-        mode="view"
-        open={reportDialog === "view"}
-        onOpenChange={(o) => setReportDialog(o ? "view" : null)}
-      />
-      <ReportDialog
-        mode="close"
-        open={reportDialog === "close"}
-        onOpenChange={(o) => setReportDialog(o ? "close" : null)}
-      />
+      <ReportDialog open={reportOpen} onOpenChange={setReportOpen} />
     </main>
   );
 }
