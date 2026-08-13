@@ -549,6 +549,10 @@ export interface Database {
         Args: { p_month: number; p_year: number };
         Returns: SaveTransactionResult & { alloc?: AllocationBreakdown; period?: string };
       };
+      close_period_without_allocation: {
+        Args: { p_month: number; p_year: number };
+        Returns: SaveTransactionResult & { status?: string; period?: string };
+      };
       upsert_product: {
         Args: {
           p_id: string | null;

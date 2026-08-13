@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ReportPreview } from "@/components/documents/report-preview";
+import { formatMoney } from "@/lib/utils";
 import { MONTH_NAMES_TH, isPeriodOver } from "@/lib/period";
 import type { MonthlyReport } from "@/lib/types/database";
 
@@ -47,7 +48,6 @@ export function ReportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
   });
 
   const periodOver = isPeriodOver(month, year);
-  const canClose = !!report && report.alloc.net_profit > 0 && periodOver;
 
   async function handleClosePeriod() {
     if (!confirm("ยืนยันการบันทึกยอดจัดสรรลงบัญชี?\n(รอบนี้จะถูกปิดงวดถาวร)")) return;
@@ -65,6 +65,41 @@ export function ReportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
     try {
       const res = await downloadGeneratedPdf(month, year);
       setDone(res);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "สร้าง PDF ไม่สำเร็จ");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // For a period whose net profit isn't positive — save_allocation_entry
+  // refuses those outright (nothing to allocate). This still marks the
+  // period as reviewed/closed instead of leaving it stuck at "ยังไม่จัดสรร"
+  // forever, just without withdrawing anything.
+  async function handleCloseNoAlloc() {
+    if (
+      !confirm(
+        "ยืนยันปิดงวดนี้?\n(กำไรสุทธิไม่เป็นบวก จึงไม่มีเงินให้จัดสรร แต่จะถูกบันทึกว่าปิดงวดแล้ว เปลี่ยนกลับไม่ได้)",
+      )
+    )
+      return;
+    setBusy(true);
+    const supabase = createClient();
+    const { data: res, error } = await supabase.rpc("close_period_without_allocation", {
+      p_month: month,
+      p_year: year,
+    });
+    if (error || !res?.ok) {
+      setBusy(false);
+      toast.error("ปิดงวดไม่สำเร็จ: " + (error?.message ?? res?.message));
+      return;
+    }
+    if (res.message) toast.info(res.message);
+    invalidate();
+
+    try {
+      const pdfRes = await downloadGeneratedPdf(month, year);
+      setDone(pdfRes);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "สร้าง PDF ไม่สำเร็จ");
     } finally {
@@ -130,17 +165,41 @@ export function ReportDialog({ open, onOpenChange }: { open: boolean; onOpenChan
             <p className="mb-1 text-[0.65rem] font-semibold uppercase tracking-wide text-rose-500">
               โซนปิดงวด — ทำครั้งเดียวต่อเดือน เปลี่ยนกลับไม่ได้
             </p>
+
             {!periodOver && (
               <p className="mb-2 text-xs text-slate-500">
                 รอบนี้ยังไม่จบ — ปิดงวดได้ตั้งแต่วันที่ 26 {MONTH_NAMES_TH[month]} {year} เป็นต้นไป
               </p>
             )}
-            {periodOver && report.alloc.net_profit <= 0 && (
-              <p className="mb-2 text-xs text-amber-600">กำไรสุทธิไม่เป็นบวก จึงยังปิดงวดไม่ได้</p>
+
+            {periodOver && report.alloc.net_profit > 0 && (
+              <Button variant="danger" className="w-full" disabled={busy} onClick={handleClosePeriod}>
+                {busy ? "กำลังดำเนินการ..." : "🔒 ปิดงวด + จัดสรรกำไร"}
+              </Button>
             )}
-            <Button variant="danger" className="w-full" disabled={busy || !canClose} onClick={handleClosePeriod}>
-              {busy ? "กำลังดำเนินการ..." : "🔒 ปิดงวด + จัดสรรกำไร"}
-            </Button>
+
+            {periodOver && report.alloc.net_profit <= 0 && (
+              <>
+                <p className="mb-2 text-xs text-amber-600">
+                  กำไรสุทธิรอบนี้เท่ากับ {formatMoney(report.alloc.net_profit)} บาท (ไม่เป็นบวก) จึงไม่มีเงินให้จัดสรร
+                  — ปิดงวดแบบไม่จัดสรรได้แทน (บันทึกว่าตรวจแล้ว แต่ไม่มีการดึงเงินออก)
+                </p>
+                <Button
+                  variant="outline"
+                  className="w-full border-amber-400 text-amber-700 hover:bg-amber-50"
+                  disabled={busy}
+                  onClick={handleCloseNoAlloc}
+                >
+                  {busy ? "กำลังดำเนินการ..." : "🔒 ปิดงวดแบบไม่จัดสรร"}
+                </Button>
+              </>
+            )}
+
+            {!periodOver && (
+              <Button variant="danger" className="w-full" disabled>
+                🔒 ปิดงวด + จัดสรรกำไร
+              </Button>
+            )}
           </div>
         )}
       </DialogContent>
