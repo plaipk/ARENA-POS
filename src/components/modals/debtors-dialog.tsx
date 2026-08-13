@@ -70,6 +70,15 @@ export function DebtorsDialog({ open, onOpenChange }: { open: boolean; onOpenCha
           <p className="py-6 text-center text-sm text-slate-400">ไม่มีหนี้ค้าง</p>
         )}
 
+        {!isLoading && !!data?.length && (
+          <div className="flex items-center justify-between rounded-2xl bg-slate-900 px-3 py-2 text-white">
+            <span className="text-xs text-slate-300">ยอดค้างรับรวม ({data.length} คน)</span>
+            <span className="text-lg font-bold">
+              {formatMoney(data.reduce((sum, d) => sum + d.total, 0))} บาท
+            </span>
+          </div>
+        )}
+
         <div className="space-y-2">
           {data?.map((d) => (
             <div key={d.name} className="rounded-2xl bg-slate-50 p-3">
