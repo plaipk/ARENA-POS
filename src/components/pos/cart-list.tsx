@@ -3,6 +3,7 @@
 import { X } from "lucide-react";
 import { formatMoney } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { INCOME_CATEGORY_LABELS } from "@/components/pos/sell-form";
 import type { CartLine } from "@/lib/types/database";
 
 export function CartList({
@@ -25,11 +26,11 @@ export function CartList({
         >
           <div className="text-sm">
             <b>{item.name}</b>
-            {item.cost !== undefined && <Badge className="ml-1">อื่นๆ</Badge>}
+            {item.category && <Badge className="ml-1">{INCOME_CATEGORY_LABELS[item.category]}</Badge>}
             <br />
             <span className="text-xs text-slate-400">
               {formatMoney(item.price)} x {item.qty}
-              {item.cost !== undefined && ` (ต้นทุน ${formatMoney(item.cost)})`}
+              {item.cost !== undefined && item.category !== "field_rental" && ` (ต้นทุน ${formatMoney(item.cost)})`}
             </span>
           </div>
           <div className="flex items-center gap-2 text-right">

@@ -5,8 +5,20 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import type { Product, CartLine, TransactionMode } from "@/lib/types/database";
+import type { Product, CartLine, IncomeCategory, TransactionMode } from "@/lib/types/database";
+
+export const INCOME_CATEGORY_LABELS: Record<IncomeCategory, string> = {
+  field_rental: "ค่าเช่าสนาม",
+  product_sale: "ขายสินค้า",
+  other_income: "รายได้อื่นๆ",
+};
+
+function categoryFor(product: Product | undefined): IncomeCategory {
+  if (!product) return "other_income";
+  return product.category === "field_rental" ? "field_rental" : "product_sale";
+}
 
 const MODE_PRICE_LABEL: Record<string, string> = {
   income: "ราคาขาย",
@@ -33,6 +45,10 @@ export function SellForm({
   const [price, setPrice] = useState("");
   const [qty, setQty] = useState("1");
   const [cost, setCost] = useState("");
+  // Follows the typed name (product's own category, else รายได้อื่นๆ) until
+  // the user picks one by hand.
+  const [category, setCategory] = useState<IncomeCategory>("other_income");
+  const [categoryTouched, setCategoryTouched] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
 
   // Income mode only: typing a name that isn't a real product reveals the
@@ -40,13 +56,15 @@ export function SellForm({
   // cost = price for zero profit) or an ad-hoc "ค่าเช่าสนาม" (cost = 0).
   const trimmedName = name.trim();
   const matchedProduct = products.find((p) => p.name.toLowerCase() === trimmedName.toLowerCase());
-  const needsCost = mode === "income" && trimmedName !== "" && !matchedProduct;
+  // ค่าเช่าสนาม has no cost to ask about — it counts in full as rent income.
+  const needsCost = mode === "income" && trimmedName !== "" && !matchedProduct && category !== "field_rental";
 
   function handleNameInput(value: string) {
     setName(value);
     if (mode !== "income") return;
     const match = products.find((p) => p.name.toLowerCase() === value.trim().toLowerCase());
     if (match) setPrice(String(match.price));
+    if (!categoryTouched) setCategory(categoryFor(match));
   }
 
   function reset() {
@@ -54,6 +72,8 @@ export function SellForm({
     setPrice("");
     setQty("1");
     setCost("");
+    setCategory("other_income");
+    setCategoryTouched(false);
     nameRef.current?.focus();
   }
 
@@ -75,7 +95,14 @@ export function SellForm({
       return;
     }
 
-    onAdd({ name: n, price: p, qty: q, total: p * q, cost: needsCost ? parseFloat(cost) || 0 : undefined });
+    onAdd({
+      name: n,
+      price: p,
+      qty: q,
+      total: p * q,
+      cost: needsCost ? parseFloat(cost) || 0 : mode === "income" && !matchedProduct ? 0 : undefined,
+      category: mode === "income" ? category : undefined,
+    });
     reset();
   }
 
@@ -111,6 +138,29 @@ export function SellForm({
           <Label>จำนวน</Label>
           <Input type="number" inputMode="numeric" value={qty} onChange={(e) => setQty(e.target.value)} />
         </div>
+        {mode === "income" && (
+          <div className="col-span-2">
+            <Label>หมวดหมู่</Label>
+            <Select
+              value={category}
+              onValueChange={(v) => {
+                setCategory(v as IncomeCategory);
+                setCategoryTouched(true);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.keys(INCOME_CATEGORY_LABELS) as IncomeCategory[]).map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {INCOME_CATEGORY_LABELS[c]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         {needsCost && (
           <div className="col-span-2">
             <Label className="text-amber-600">

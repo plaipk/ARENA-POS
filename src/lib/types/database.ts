@@ -16,6 +16,7 @@ export type TransactionCategory =
   | "transfer"
   | "profit_allocation"
   | "other_income";
+export type IncomeCategory = Extract<TransactionCategory, "field_rental" | "product_sale" | "other_income">;
 export type TransactionMode = "income" | "expense" | "stock_in" | "settlement" | "transfer" | "allocation";
 export type DebtStatus = "outstanding" | "partial" | "paid" | "void";
 
@@ -146,6 +147,7 @@ export interface CartLine {
   price: number;
   total: number;
   cost?: number;
+  category?: IncomeCategory;
 }
 
 export interface SaveTransactionResult {
